@@ -1,0 +1,11 @@
+# .NET / Avalonia
+bin/
+obj/
+*.user
+.vs/
+.idea/
+*.suo
+*.userprefs
+
+# macOS
+.DS_Store
