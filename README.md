@@ -1,6 +1,6 @@
-# 🚀 Galaga — C# / Avalonia Clone
+# 🚀 Galaga — Clone in C# / Avalonia
 
-A faithful arcade recreation of the classic **Galaga** (1981) built with **.NET 8** and **Avalonia UI**, featuring pixel-art sprites drawn entirely in code, synthesized retro audio, and a clean entity-based game engine.
+Una fedele ricreazione arcade del classico **Galaga** (1981), realizzata con **.NET 8** e **Avalonia UI**: sprite pixel-art disegnati interamente in codice, audio retro sintetizzato e un motore di gioco pulito basato su entità.
 
 ```
  ██████╗  █████╗ ██╗      █████╗  ██████╗  █████╗
@@ -13,200 +13,200 @@ A faithful arcade recreation of the classic **Galaga** (1981) built with **.NET 
 
 ---
 
-## 📸 Screenshots
+## 📸 Screenshot
 
 | Menu | Gameplay |
 |------|----------|
-| ![Menu Screen](screenshots/galaga_menu.png) | ![Gameplay](screenshots/galaga_playing.png) |
+| ![Schermata menu](screenshots/galaga_menu.png) | ![Gameplay](screenshots/galaga_playing.png) |
 
 ---
 
-## ✨ Features
+## ✨ Funzionalità
 
-- 🎮 **Classic Galaga gameplay** — formation entry, diving attacks, oscillating enemy grid
-- 🖼️ **Pixel-art sprites** — Bee, Butterfly, Boss Galaga, and player ship, all drawn with Avalonia geometry (no image files)
-- 🎞️ **2-frame enemy animation** — wings flap at ~7.5 Hz, matching the original arcade feel
-- 💥 **Explosion effects** — expanding particle bursts (white → yellow → orange → red)
-- 🔊 **Synthesized audio** — shoot, explosion, player death, and stage-clear sounds generated as PCM waveforms via OpenAL
-- 📈 **Progressive difficulty** — enemy speed and shooting rate increase with each level
-- 🏆 **Persistent high score** — tracked across resets within a session
-
----
-
-## 🕹️ Controls
-
-| Key | Action |
-|-----|--------|
-| `←` / `A` | Move left |
-| `→` / `D` | Move right |
-| `Space` | Shoot / Start game / Retry |
-| `P` | Pause / Resume |
-| `Esc` | Return to main menu |
-
-> **Tip:** You can have at most **2 player bullets** on screen at once — just like the original.
+- 🎮 **Gameplay classico di Galaga** — entrata in formazione, attacchi in picchiata, griglia nemica oscillante
+- 🖼️ **Sprite pixel-art** — Ape, Farfalla, Boss Galaga e navicella del giocatore, tutti disegnati con geometria Avalonia (nessun file immagine)
+- 🎞️ **Animazione nemica a 2 frame** — le ali battono a ~7,5 Hz, fedele alla sensazione dell'arcade originale
+- 💥 **Effetti esplosione** — particelle in espansione (bianco → giallo → arancione → rosso)
+- 🔊 **Audio sintetizzato** — sparo, esplosione, morte del giocatore e suoni di fine livello generati come forme d'onda PCM tramite OpenAL
+- 📈 **Difficoltà progressiva** — velocità nemica e frequenza di fuoco aumentano ad ogni livello
+- 🏆 **Punteggio massimo persistente** — mantenuto tra i reset durante la sessione
 
 ---
 
-## 👾 Enemy Types & Scoring
+## 🕹️ Controlli
+
+| Tasto | Azione |
+|-------|--------|
+| `←` / `A` | Muovi a sinistra |
+| `→` / `D` | Muovi a destra |
+| `Spazio` | Spara / Avvia partita / Riprova |
+| `P` | Pausa / Riprendi |
+| `Esc` | Torna al menu principale |
+
+> **Suggerimento:** Puoi avere al massimo **2 proiettili del giocatore** sullo schermo contemporaneamente — proprio come nell'originale.
+
+---
+
+## 👾 Tipi di nemici e punteggi
 
 ```
 ┌──────────────────┬──────────────┬─────────────────┬─────────────┐
-│ Enemy            │ Appearance   │ In Formation    │ Diving      │
+│ Nemico           │ Aspetto      │ In formazione   │ In picchiata│
 ├──────────────────┼──────────────┼─────────────────┼─────────────┤
-│ Bee              │ Yellow       │ 50 pts          │ 100 pts     │
-│ Butterfly        │ Cyan         │ 80 pts          │ 160 pts     │
-│ Boss Galaga      │ Red/Orange   │ 150 pts         │ 400 pts     │
+│ Ape              │ Giallo       │ 50 pt           │ 100 pt      │
+│ Farfalla         │ Ciano        │ 80 pt           │ 160 pt      │
+│ Boss Galaga      │ Rosso/Arancio│ 150 pt          │ 400 pt      │
 └──────────────────┴──────────────┴─────────────────┴─────────────┘
 ```
 
-**Formation layout (5 rows × 8 columns = 40 enemies per stage):**
+**Disposizione della formazione (5 righe × 8 colonne = 40 nemici per livello):**
 ```
-Row 0: ✦ ✦ ✦ [B] [B] ✦ ✦ ✦   ✦ = Butterfly,  B = Boss Galaga
-Row 1: ✦ ✦ ✦  ✦   ✦  ✦ ✦ ✦
-Row 2: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶   ✶ = Bee
-Row 3: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶
-Row 4: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶
+Riga 0: ✦ ✦ ✦ [B] [B] ✦ ✦ ✦   ✦ = Farfalla,  B = Boss Galaga
+Riga 1: ✦ ✦ ✦  ✦   ✦  ✦ ✦ ✦
+Riga 2: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶   ✶ = Ape
+Riga 3: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶
+Riga 4: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶
 ```
 
-### Game Rules
-- **3 lives** to start; the ship respawns after **2 seconds**
-- Stage clear when all 40 enemies are destroyed; next level begins after 2.5 s
-- Up to **2 enemies dive simultaneously**; divers loop back from the top if they miss
+### Regole di gioco
+- **3 vite** iniziali; la navicella riappare dopo **2 secondi**
+- Il livello termina quando tutti i 40 nemici sono distrutti; quello successivo inizia dopo 2,5 s
+- Fino a **2 nemici in picchiata simultaneamente**; i picchiatori ritornano dall'alto se mancano il bersaglio
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Per iniziare
 
-### Prerequisites
+### Prerequisiti
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- macOS, Linux, or Windows (audio requires an OpenAL-compatible device)
+- macOS, Linux o Windows (l'audio richiede un dispositivo compatibile OpenAL)
 
-### Build & Run
+### Compilazione ed esecuzione
 
 ```bash
-# Clone the repository
+# Clona il repository
 git clone https://github.com/your-username/Galaga.git
 cd Galaga
 
-# Run the game
+# Avvia il gioco
 dotnet run --project Galaga/Galaga.csproj
 
-# Run tests
+# Esegui i test
 dotnet test
 
-# Run a single test
+# Esegui un singolo test
 dotnet test --filter "FullyQualifiedName~Player_dies_when_hit_by_enemy_bullet"
 
-# Release build
+# Build di rilascio
 dotnet publish Galaga/Galaga.csproj -c Release -o publish/
 ```
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architettura
 
 ```
 Galaga/
 ├── Engine/
-│   ├── GameEngine.cs       # Pure game logic: tick loop, collision, AI, scoring
-│   └── GameState.cs        # All mutable state (phase, score, lives, entity lists)
+│   ├── GameEngine.cs       # Logica di gioco pura: ciclo tick, collisioni, IA, punteggio
+│   └── GameState.cs        # Tutto lo stato mutabile (fase, punteggio, vite, liste entità)
 ├── Entities/
-│   ├── Entity.cs           # Abstract base: position, size, AABB collision
-│   ├── Player.cs           # Movement, bullet cap, respawn timer
-│   ├── Enemy.cs            # Per-enemy state machine
-│   ├── EnemyFormation.cs   # Grid layout, oscillation, entry waves
-│   ├── Bullet.cs           # Direction determined by BulletOwner enum
-│   └── Explosion.cs        # Visual-only particle burst data
+│   ├── Entity.cs           # Base astratta: posizione, dimensione, collisione AABB
+│   ├── Player.cs           # Movimento, limite proiettili, timer respawn
+│   ├── Enemy.cs            # Macchina a stati per ciascun nemico
+│   ├── EnemyFormation.cs   # Griglia, oscillazione, ondate di entrata
+│   ├── Bullet.cs           # Direzione determinata dall'enum BulletOwner
+│   └── Explosion.cs        # Dati visivi della particella di esplosione
 ├── Views/
-│   ├── GameCanvas.cs       # Avalonia Control: 60 fps timer, key events, Render()
-│   └── SpriteRenderer.cs   # All drawing code (pixel-art + geometry)
+│   ├── GameCanvas.cs       # Controllo Avalonia: timer 60 fps, eventi tastiera, Render()
+│   └── SpriteRenderer.cs   # Tutto il codice di disegno (pixel-art + geometria)
 └── Audio/
-    └── SoundPlayer.cs      # OpenAL synthesis (shoot, explosion, death, arpeggio)
+    └── SoundPlayer.cs      # Sintesi OpenAL (sparo, esplosione, morte, arpeggio)
 ```
 
-### Data Flow
+### Flusso dei dati
 
 ```
 GameCanvas.OnTick(16ms)
     │
-    ├─► GameEngine.Tick(dt)   ──► mutates GameState
+    ├─► GameEngine.Tick(dt)   ──► modifica GameState
     │       │                        │
-    │       ├─ player / formation    ├─ Bullets list
-    │       ├─ collision detection   ├─ Explosions list
-    │       └─ enqueue SoundEffects  └─ PendingSounds queue
+    │       ├─ giocatore / formazione ├─ lista Bullets
+    │       ├─ rilevamento collisioni ├─ lista Explosions
+    │       └─ accoda SoundEffects   └─ coda PendingSounds
     │
-    ├─► SoundPlayer.Play()    ◄── dequeues PendingSounds
+    ├─► SoundPlayer.Play()    ◄── estrae da PendingSounds
     │
     └─► InvalidateVisual()    ──► GameCanvas.Render(DrawingContext)
                                       │
                                       ├─ SpriteRenderer.DrawEnemy(frame)
                                       ├─ SpriteRenderer.DrawPlayer()
                                       ├─ SpriteRenderer.DrawExplosion()
-                                      └─ HUD / overlay text
+                                      └─ HUD / testi overlay
 ```
 
-### Enemy State Machine
+### Macchina a stati del nemico
 
 ```
-FormationEntry ──(arrives at slot)──► InFormation
-                                          │
-                               (random dive trigger)
-                                          │
-                                          ▼
-                                       Diving ──(off-screen bottom)──► Returning
-                                                                            │
-                                                                 (arrives at slot)
-                                                                            │
-                                                                            ▼
-                                                                      InFormation
+FormationEntry ──(raggiunge lo slot)──► InFormation
+                                             │
+                                  (innesco casuale picchiata)
+                                             │
+                                             ▼
+                                          Diving ──(fuori schermo in basso)──► Returning
+                                                                                    │
+                                                                       (raggiunge lo slot)
+                                                                                    │
+                                                                                    ▼
+                                                                              InFormation
 ```
 
-> **Key rule:** In `InFormation` state, `Enemy.Update()` **snaps** `X/Y` to `FormationX + oscillationOffset` every tick. Setting `X`/`Y` directly has no lasting effect unless `FormationX`/`FormationY` are also updated.
+> **Regola chiave:** Nello stato `InFormation`, `Enemy.Update()` **aggancia** `X/Y` a `FormationX + oscillationOffset` ad ogni tick. Impostare `X`/`Y` direttamente non ha effetto duraturo se non vengono aggiornati anche `FormationX`/`FormationY`.
 
 ---
 
 ## 🔊 Audio
 
-Sounds are synthesized at runtime as 22050 Hz PCM and played via **OpenAL** (`Silk.NET.OpenAL`). No audio files are included. If OpenAL is unavailable, the game runs silently.
+I suoni vengono sintetizzati a runtime come PCM a 22050 Hz e riprodotti tramite **OpenAL** (`Silk.NET.OpenAL`). Nessun file audio incluso. Se OpenAL non è disponibile, il gioco funziona senza audio.
 
-| Sound | Synthesis |
-|-------|-----------|
-| Shoot | Square wave, 820 → 160 Hz sweep, 90 ms |
-| Enemy explosion | White noise + 80 Hz rumble, 220 ms |
-| Player death | Square wave, 580 → 55 Hz sweep, 600 ms |
-| Stage clear | C4–E4–G4–C5 arpeggio, square wave |
+| Suono | Sintesi |
+|-------|---------|
+| Sparo | Onda quadra, sweep 820 → 160 Hz, 90 ms |
+| Esplosione nemica | Rumore bianco + rumble 80 Hz, 220 ms |
+| Morte del giocatore | Onda quadra, sweep 580 → 55 Hz, 600 ms |
+| Fine livello | Arpeggio Do4–Mi4–Sol4–Do5, onda quadra |
 
 ---
 
-## 🧪 Tests
+## 🧪 Test
 
 ```bash
 dotnet test
 ```
 
-13 unit tests cover the `GameEngine` and `Entities` layers (no UI dependency):
+13 test unitari coprono i livelli `GameEngine` ed `Entities` (nessuna dipendenza dall'interfaccia grafica):
 
-- Player lives, bullet cap, respawn
-- Collision detection (AABB, dead-entity guard)
-- Score (formation vs. diving bonus)
-- Game-over and stage-clear transitions
-- Formation initialization
+- Vite, limite proiettili e respawn del giocatore
+- Rilevamento collisioni (AABB, guardia entità morte)
+- Punteggio (bonus formazione vs. picchiata)
+- Transizioni game over e fine livello
+- Inizializzazione della formazione
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Stack tecnologico
 
-| Component | Technology |
-|-----------|-----------|
-| Language | C# 12 / .NET 8 |
-| UI & rendering | [Avalonia UI](https://avaloniaui.net/) 11 |
+| Componente | Tecnologia |
+|------------|-----------|
+| Linguaggio | C# 12 / .NET 8 |
+| UI e rendering | [Avalonia UI](https://avaloniaui.net/) 11 |
 | Audio | [Silk.NET.OpenAL](https://github.com/dotnet/Silk.NET) 2.23 |
-| Tests | xUnit |
-| Sprites | Pure code (pixel-art rectangles + `StreamGeometry`) |
+| Test | xUnit |
+| Sprite | Puro codice (rettangoli pixel-art + `StreamGeometry`) |
 
 ---
 
-## 📄 License
+## 📄 Licenza
 
 MIT
