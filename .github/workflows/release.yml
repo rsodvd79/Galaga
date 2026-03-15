@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Generate version
+        id: version
+        run: echo "value=1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Build Windows (x64)
+        run: |
+          dotnet publish Galaga/Galaga.csproj \
+            -c Release \
+            -r win-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:Version=${{ steps.version.outputs.value }} \
+            -o publish/win-x64
+
+      - name: Build Linux (x64)
+        run: |
+          dotnet publish Galaga/Galaga.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:Version=${{ steps.version.outputs.value }} \
+            -o publish/linux-x64
+
+      - name: Build macOS (x64)
+        run: |
+          dotnet publish Galaga/Galaga.csproj \
+            -c Release \
+            -r osx-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:Version=${{ steps.version.outputs.value }} \
+            -o publish/osx-x64
+
+      - name: Zip artifacts
+        run: |
+          cd publish
+          zip -r ../Galaga-${{ steps.version.outputs.value }}-win-x64.zip win-x64/
+          zip -r ../Galaga-${{ steps.version.outputs.value }}-linux-x64.zip linux-x64/
+          zip -r ../Galaga-${{ steps.version.outputs.value }}-osx-x64.zip osx-x64/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.value }}
+          name: "Galaga v${{ steps.version.outputs.value }}"
+          generate_release_notes: true
+          files: |
+            Galaga-${{ steps.version.outputs.value }}-win-x64.zip
+            Galaga-${{ steps.version.outputs.value }}-linux-x64.zip
+            Galaga-${{ steps.version.outputs.value }}-osx-x64.zip
