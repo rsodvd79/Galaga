@@ -51,6 +51,12 @@ public class Player : Entity
         }
     }
 
+    public void CancelRespawn()
+    {
+        IsRespawning = false;
+        RespawnTimer = 0;
+    }
+
     public void Reset()
     {
         Lives = 3;

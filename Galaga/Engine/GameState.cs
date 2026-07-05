@@ -47,6 +47,7 @@ public class GameState
         Bullets.Clear();
         Explosions.Clear();
         Player.IsAlive = true;
+        Player.CancelRespawn();
         Player.X = Player.DefaultX;
         Player.Y = Player.DefaultY;
         Formation.Initialize();

@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Galaga.Audio;
 using Galaga.Engine;
 using Galaga.Entities;
@@ -165,6 +166,13 @@ public class GameCanvas : Control
                 (TopLevel.GetTopLevel(this) as Window)?.Close();
             });
         }
+    }
+
+    // ─── Cleanup ────────────────────────────────────────────────────────────
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        _sound.Dispose();
     }
 
     // ─── Screenshot ─────────────────────────────────────────────────────────

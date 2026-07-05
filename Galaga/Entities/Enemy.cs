@@ -45,6 +45,7 @@ public class Enemy : Entity
 
     public void StartDive(double targetX, double targetY)
     {
+        if (State != EnemyState.InFormation) return;
         State = EnemyState.Diving;
         _diveAngle = Math.Atan2(targetY - Y, targetX - X);
         _loopProgress = 0;
