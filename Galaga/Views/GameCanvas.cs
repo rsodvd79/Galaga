@@ -45,7 +45,7 @@ public class GameCanvas : Control
     private int AnimFrame => (_tickCount / 8) % 2; // flips every 8 ticks ≈ 7.5 Hz
 
     // ─── Starfield ──────────────────────────────────────────────────────────
-    private (double x, double y, int level)[] _stars;
+    private (double x, double y, int level)[] _stars = [];
 
     private void InitStars()
     {

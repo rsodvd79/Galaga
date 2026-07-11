@@ -4,10 +4,6 @@ using Galaga.Entities;
 
 namespace Galaga.Views;
 
-/// <summary>
-/// Draws all game entities using pixel-art rectangles and StreamGeometry paths.
-/// All brushes are cached as statics to avoid per-frame allocations.
-/// </summary>
 public static class SpriteRenderer
 {
     // ─── Cached brushes ──────────────────────────────────────────────────────
@@ -24,13 +20,15 @@ public static class SpriteRenderer
     private static readonly IBrush BossCore   = new SolidColorBrush(Color.FromRgb(255, 230, 80));
     private static readonly IBrush BossEye    = new SolidColorBrush(Color.FromRgb(255, 255, 200));
 
-    private static readonly IBrush PlayerHull    = new SolidColorBrush(Color.FromRgb(50,  210, 90));
-    private static readonly IBrush PlayerCockpit = new SolidColorBrush(Color.FromRgb(80,  210, 255));
-    private static readonly IBrush PlayerEngine  = new SolidColorBrush(Color.FromRgb(255, 110, 0));
+    private static readonly IBrush PlayerHull     = new SolidColorBrush(Color.FromRgb(50,  210, 90));
+    private static readonly IBrush PlayerHullDark  = new SolidColorBrush(Color.FromRgb(30,  160, 60));
+    private static readonly IBrush PlayerCockpit   = new SolidColorBrush(Color.FromRgb(80,  210, 255));
+    private static readonly IBrush PlayerEngine    = new SolidColorBrush(Color.FromRgb(255, 110, 0));
+    private static readonly IBrush PlayerEngineGlow = new SolidColorBrush(Color.FromRgb(255, 200, 80));
+    private static readonly IBrush PlayerAccent    = new SolidColorBrush(Color.FromRgb(100, 255, 130));
 
     private static readonly IBrush MiniShipColor = new SolidColorBrush(Color.FromRgb(50,  210, 90));
 
-    // Explosion colours (progress-keyed)
     private static readonly IBrush ExpWhite  = Brushes.White;
     private static readonly IBrush ExpYellow = new SolidColorBrush(Color.FromRgb(255, 230, 60));
     private static readonly IBrush ExpOrange = new SolidColorBrush(Color.FromRgb(255, 130, 20));
@@ -38,6 +36,8 @@ public static class SpriteRenderer
 
     // ─── Pixel-art sprite maps ────────────────────────────────────────────────
     // '#' = main color, '.' = empty. 8×8 chars → rendered at 3×3 px = 24×24 total.
+
+    private const double Ps = 3.0;
 
     // BEE — frame 0 (wings out)
     private static readonly string[] BeePx0 =
@@ -114,8 +114,6 @@ public static class SpriteRenderer
         "..####..",
     };
 
-    private const double Ps = 3.0; // pixels per sprite cell
-
     // ─── Public draw methods ─────────────────────────────────────────────────
 
     public static void DrawEnemy(DrawingContext ctx, Enemy enemy, int frame)
@@ -159,40 +157,80 @@ public static class SpriteRenderer
         ctx.FillRectangle(BossEye,  new Rect(x + 5 * Ps, y + 2 * Ps, Ps, Ps));
     }
 
-    // Player ship: 30×20, drawn as a StreamGeometry hull + cockpit + engine glows
+    // ─── Player ship ─────────────────────────────────────────────────────────
     public static void DrawPlayer(DrawingContext ctx, double x, double y)
     {
-        var sg = new StreamGeometry();
-        using (var gc = sg.Open())
+        // Hull (main body + wings)
+        var hull = new StreamGeometry();
+        using (var gc = hull.Open())
         {
             gc.BeginFigure(new Point(x + 15, y), isFilled: true);
-            gc.LineTo(new Point(x + 30, y + 18));
-            gc.LineTo(new Point(x + 23, y + 14));
-            gc.LineTo(new Point(x + 22, y + 20));
-            gc.LineTo(new Point(x + 8,  y + 20));
-            gc.LineTo(new Point(x + 7,  y + 14));
-            gc.LineTo(new Point(x + 0,  y + 18));
+            gc.LineTo(new Point(x + 30, y + 16));
+            gc.LineTo(new Point(x + 26, y + 14));
+            gc.LineTo(new Point(x + 24, y + 18));
+            gc.LineTo(new Point(x + 20, y + 20));
+            gc.LineTo(new Point(x + 15, y + 18));
+            gc.LineTo(new Point(x + 10, y + 20));
+            gc.LineTo(new Point(x + 6,  y + 18));
+            gc.LineTo(new Point(x + 4,  y + 14));
+            gc.LineTo(new Point(x + 0,  y + 16));
             gc.EndFigure(isClosed: true);
         }
-        ctx.DrawGeometry(PlayerHull, null, sg);
-        ctx.FillRectangle(PlayerCockpit, new Rect(x + 12, y + 5, 6, 9));
-        ctx.FillRectangle(PlayerEngine,  new Rect(x + 5,  y + 15, 4, 5));
-        ctx.FillRectangle(PlayerEngine,  new Rect(x + 21, y + 15, 4, 5));
+        ctx.DrawGeometry(PlayerHull, null, hull);
+
+        // Wing accents (dark outlines on the leading edges)
+        var wingL = new StreamGeometry();
+        using (var gc = wingL.Open())
+        {
+            gc.BeginFigure(new Point(x,     y + 16), isFilled: true);
+            gc.LineTo(new Point(x + 4,     y + 14));
+            gc.LineTo(new Point(x + 3,     y + 8));
+            gc.EndFigure(isClosed: true);
+        }
+        ctx.DrawGeometry(PlayerHullDark, null, wingL);
+
+        var wingR = new StreamGeometry();
+        using (var gc = wingR.Open())
+        {
+            gc.BeginFigure(new Point(x + 30, y + 16), isFilled: true);
+            gc.LineTo(new Point(x + 26,    y + 14));
+            gc.LineTo(new Point(x + 27,    y + 8));
+            gc.EndFigure(isClosed: true);
+        }
+        ctx.DrawGeometry(PlayerHullDark, null, wingR);
+
+        // Cockpit
+        ctx.FillRectangle(PlayerCockpit, new Rect(x + 12, y + 4,  6, 10));
+
+        // Cockpit highlight
+        ctx.FillRectangle(PlayerAccent,  new Rect(x + 13, y + 5,  4, 3));
+
+        // Nose tip
+        ctx.FillRectangle(PlayerAccent,  new Rect(x + 14, y + 1,  2, 3));
+
+        // Engine pods
+        ctx.FillRectangle(PlayerEngine,     new Rect(x + 4,  y + 15, 5, 5));
+        ctx.FillRectangle(PlayerEngine,     new Rect(x + 21, y + 15, 5, 5));
+
+        // Engine glow (inner)
+        ctx.FillRectangle(PlayerEngineGlow, new Rect(x + 5,  y + 16, 3, 4));
+        ctx.FillRectangle(PlayerEngineGlow, new Rect(x + 22, y + 16, 3, 4));
     }
 
-    // Tiny ship icon for the HUD lives display
+    // ─── Mini player (HUD) ───────────────────────────────────────────────────
     public static void DrawMiniPlayer(DrawingContext ctx, double x, double y)
     {
         ctx.FillRectangle(MiniShipColor, new Rect(x + 6,  y,     4, 11));
         ctx.FillRectangle(MiniShipColor, new Rect(x,      y + 5, 16, 6));
         ctx.FillRectangle(PlayerEngine,  new Rect(x + 1,  y + 9, 3, 3));
         ctx.FillRectangle(PlayerEngine,  new Rect(x + 12, y + 9, 3, 3));
+        ctx.FillRectangle(PlayerCockpit, new Rect(x + 7,  y + 2, 2, 3));
     }
 
-    // Expanding particle burst explosion
+    // ─── Explosion ───────────────────────────────────────────────────────────
     public static void DrawExplosion(DrawingContext ctx, Explosion exp)
     {
-        double p = exp.Progress; // 0 → 1
+        double p = exp.Progress;
 
         IBrush brush = p < 0.25 ? ExpWhite
                      : p < 0.55 ? ExpYellow
@@ -202,7 +240,6 @@ public static class SpriteRenderer
         double radius   = exp.Radius * p;
         double partSize = Math.Max(1.5, 5.0 * (1.0 - p));
 
-        // 8 particles evenly spaced around a ring, + 4 inner sparks
         for (int i = 0; i < 8; i++)
         {
             double angle = i * Math.PI / 4.0 + p * 0.8;
@@ -212,7 +249,6 @@ public static class SpriteRenderer
                 new Rect(px - partSize / 2, py - partSize / 2, partSize, partSize));
         }
 
-        // Bright centre flash only at start
         if (p < 0.30)
         {
             double flash = 8 * (1 - p / 0.30);
