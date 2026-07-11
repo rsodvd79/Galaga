@@ -119,6 +119,43 @@ public class GameEngineTests
     }
 
     [Fact]
+    public void Player_dies_when_hit_by_diving_enemy()
+    {
+        var (engine, state) = CreateGame();
+        state.Formation.Enemies.Clear();
+
+        var enemy = new Enemy(EnemyType.Bee, 400, 300, 0);
+        enemy.State = EnemyState.Diving;
+        enemy.X = state.Player.X;
+        enemy.Y = state.Player.Y;
+        state.Formation.Enemies.Add(enemy);
+
+        engine.Tick(0.016);
+
+        Assert.Equal(2, state.Player.Lives);
+        Assert.False(state.Player.IsAlive);
+        Assert.False(enemy.IsAlive);
+    }
+
+    [Fact]
+    public void Game_over_when_diving_enemy_kills_last_life()
+    {
+        var (engine, state) = CreateGame();
+        state.Formation.Enemies.Clear();
+        state.Player.Lives = 1;
+
+        var enemy = new Enemy(EnemyType.Bee, 400, 300, 0);
+        enemy.State = EnemyState.Diving;
+        enemy.X = state.Player.X;
+        enemy.Y = state.Player.Y;
+        state.Formation.Enemies.Add(enemy);
+
+        engine.Tick(0.016);
+
+        Assert.Equal(GamePhase.GameOver, state.Phase);
+    }
+
+    [Fact]
     public void Score_gives_diving_bonus()
     {
         var (engine, state) = CreateGame();

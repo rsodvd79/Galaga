@@ -26,6 +26,7 @@ public class GameEngine
         HandleEnemyShooting(formation, elapsed);
         TriggerEnemyDives(formation, player);
         ResolveBulletEnemyCollisions(formation);
+        ResolveEnemyPlayerCollision(formation, player);
         ResolveBulletPlayerCollision(player);
         CheckStageClear(formation);
     }
@@ -140,6 +141,31 @@ public class GameEngine
         }
 
         _state.Bullets.RemoveAll(b => !b.IsAlive);
+    }
+
+    private void ResolveEnemyPlayerCollision(EnemyFormation formation, Player player)
+    {
+        if (!player.IsAlive) return;
+
+        foreach (var enemy in formation.Enemies)
+        {
+            if (!enemy.IsAlive || enemy.State != EnemyState.Diving) continue;
+            if (!enemy.CollidesWith(player)) continue;
+
+            enemy.IsAlive = false;
+            player.Die();
+
+            _state.Explosions.Add(new Explosion(
+                player.X + player.Width  / 2,
+                player.Y + player.Height / 2,
+                radius: 28));
+            _state.PendingSounds.Enqueue(SoundEffect.PlayerDeath);
+
+            if (player.Lives <= 0)
+                _state.Phase = GamePhase.GameOver;
+
+            break;
+        }
     }
 
     private void ResolveBulletPlayerCollision(Player player)

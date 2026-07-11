@@ -44,8 +44,34 @@ public class GameCanvas : Control
     private int _tickCount;
     private int AnimFrame => (_tickCount / 8) % 2; // flips every 8 ticks ≈ 7.5 Hz
 
-    // ─── Starfield (deterministic seed) ─────────────────────────────────────
-    private readonly (double x, double y, int level)[] _stars;
+    // ─── Starfield ──────────────────────────────────────────────────────────
+    private (double x, double y, int level)[] _stars;
+
+    private void InitStars()
+    {
+        var rng = Random.Shared;
+        _stars  = new (double, double, int)[90];
+        for (int i = 0; i < _stars.Length; i++)
+            _stars[i] = (rng.NextDouble() * GameState.GameWidth,
+                         rng.NextDouble() * GameState.GameHeight,
+                         rng.Next(3));
+    }
+
+    private void UpdateStars(double elapsed)
+    {
+        var h = GameState.GameHeight;
+        var rng = Random.Shared;
+        for (int i = 0; i < _stars.Length; i++)
+        {
+            var speed = _stars[i].level switch { 2 => 60.0, 1 => 40.0, _ => 20.0 };
+            _stars[i].y += speed * elapsed;
+            if (_stars[i].y >= h)
+            {
+                _stars[i].y = 0;
+                _stars[i].x = rng.NextDouble() * GameState.GameWidth;
+            }
+        }
+    }
 
     public GameCanvas()
     {
@@ -55,12 +81,7 @@ public class GameCanvas : Control
         _engine = new GameEngine(_state);
         _sound  = new SoundPlayer();
 
-        var rng = new Random(42);
-        _stars  = new (double, double, int)[90];
-        for (int i = 0; i < _stars.Length; i++)
-            _stars[i] = (rng.NextDouble() * GameState.GameWidth,
-                         rng.NextDouble() * GameState.GameHeight,
-                         rng.Next(3));
+        InitStars();
 
         Focusable = true;
 
@@ -78,6 +99,7 @@ public class GameCanvas : Control
         _lastTick = now;
         _tickCount++;
 
+        UpdateStars(dt);
         _engine.Tick(dt);
         _engine.UpdateStageClear(dt);
 

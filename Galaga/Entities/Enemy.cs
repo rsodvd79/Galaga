@@ -104,11 +104,15 @@ public class Enemy : Entity
         _loopProgress += elapsed;
         X += Math.Cos(_diveAngle) * _diveSpeed * elapsed;
         Y += Math.Sin(_diveAngle) * _diveSpeed * elapsed;
-        _diveAngle += elapsed * 0.4; // gentle curve toward bottom
+
+        // Curve toward straight-down (π/2) so the enemy always exits the bottom
+        double diff = Math.PI / 2 - _diveAngle;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        while (diff < -Math.PI) diff += 2 * Math.PI;
+        _diveAngle += diff * elapsed * 2.0;
 
         if (Y > gameHeight + 50)
         {
-            // Reenter from top offset to the side
             Y = -50;
             X = Math.Clamp(FormationX + Math.Sin(_loopProgress) * 80, 0, gameWidth - Width);
             State = EnemyState.Returning;
