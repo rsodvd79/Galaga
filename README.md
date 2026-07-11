@@ -24,12 +24,15 @@ Una fedele ricreazione arcade del classico **Galaga** (1981), realizzata con **.
 ## ✨ Funzionalità
 
 - 🎮 **Gameplay classico di Galaga** — entrata in formazione, attacchi in picchiata, griglia nemica oscillante
+- 🌟 **Sfondo stellare dinamico** — 90 stelle con parallasse a 3 velocità, rigenerate casualmente ad ogni partita
 - 🖼️ **Sprite pixel-art** — Ape, Farfalla, Boss Galaga e navicella del giocatore, tutti disegnati con geometria Avalonia (nessun file immagine)
 - 🎞️ **Animazione nemica a 2 frame** — le ali battono a ~7,5 Hz, fedele alla sensazione dell'arcade originale
 - 💥 **Effetti esplosione** — particelle in espansione (bianco → giallo → arancione → rosso)
+- 💀 **Collisione nemico-giocatore** — i nemici in picchiata uccidono il giocatore al contatto
 - 🔊 **Audio sintetizzato** — sparo, esplosione, morte del giocatore e suoni di fine livello generati come forme d'onda PCM tramite OpenAL
 - 📈 **Difficoltà progressiva** — velocità nemica e frequenza di fuoco aumentano ad ogni livello
 - 🏆 **Punteggio massimo persistente** — mantenuto tra i reset durante la sessione
+- 🚀 **Navicella migliorata** — ali sagomate, abitacolo con highlight, bagliori motore a due toni
 
 ---
 
@@ -71,7 +74,8 @@ Riga 4: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶
 ### Regole di gioco
 - **3 vite** iniziali; la navicella riappare dopo **2 secondi**
 - Il livello termina quando tutti i 40 nemici sono distrutti; quello successivo inizia dopo 2,5 s
-- Fino a **2 nemici in picchiata simultaneamente**; i picchiatori ritornano dall'alto se mancano il bersaglio
+- Fino a **2 nemici in picchiata simultaneamente**; i picchiatori che mancano il bersaglio curvano verso il basso ed escono dallo schermo, poi rientrano dall'alto
+- I nemici in picchiata che **colpiscono il giocatore** lo uccidono e muoiono a loro volta
 
 ---
 
@@ -130,11 +134,14 @@ Galaga/
 ```
 GameCanvas.OnTick(16ms)
     │
-    ├─► GameEngine.Tick(dt)   ──► modifica GameState
-    │       │                        │
-    │       ├─ giocatore / formazione ├─ lista Bullets
-    │       ├─ rilevamento collisioni ├─ lista Explosions
-    │       └─ accoda SoundEffects   └─ coda PendingSounds
+    ├─► GameCanvas.UpdateStars(dt)   ── parallasse delle stelle
+    │
+    ├─► GameEngine.Tick(dt)          ──► modifica GameState
+    │       │                              │
+    │       ├─ giocatore / formazione      ├─ lista Bullets
+    │       ├─ collisioni (proiettili +    ├─ lista Explosions
+    │       │  nemico-giocatore)           └─ coda PendingSounds
+    │       └─ accoda SoundEffects
     │
     ├─► SoundPlayer.Play()    ◄── estrae da PendingSounds
     │
@@ -163,6 +170,8 @@ FormationEntry ──(raggiunge lo slot)──► InFormation
 ```
 
 > **Regola chiave:** Nello stato `InFormation`, `Enemy.Update()` **aggancia** `X/Y` a `FormationX + oscillationOffset` ad ogni tick. Impostare `X`/`Y` direttamente non ha effetto duraturo se non vengono aggiornati anche `FormationX`/`FormationY`.
+>
+> **Collisione con il giocatore:** I nemici in stato `Diving` che toccano il giocatore lo uccidono e muoiono a loro volta.
 
 ---
 
@@ -185,13 +194,14 @@ I suoni vengono sintetizzati a runtime come PCM a 22050 Hz e riprodotti tramite 
 dotnet test
 ```
 
-13 test unitari coprono i livelli `GameEngine` ed `Entities` (nessuna dipendenza dall'interfaccia grafica):
+15 test unitari coprono i livelli `GameEngine` ed `Entities` (nessuna dipendenza dall'interfaccia grafica):
 
 - Vite, limite proiettili e respawn del giocatore
 - Rilevamento collisioni (AABB, guardia entità morte)
 - Punteggio (bonus formazione vs. picchiata)
 - Transizioni game over e fine livello
 - Inizializzazione della formazione
+- Morte del giocatore per collisione con nemico in picchiata
 
 ---
 
