@@ -255,7 +255,7 @@ public class GameCanvas : Control
 
         // Player
         if (_state.Player.IsAlive)
-            SpriteRenderer.DrawPlayer(ctx, _state.Player.X, _state.Player.Y);
+            SpriteRenderer.DrawPlayer(ctx, _state.Player.X, _state.Player.Y, AnimFrame);
 
         // Bullets
         foreach (var bullet in _state.Bullets)
