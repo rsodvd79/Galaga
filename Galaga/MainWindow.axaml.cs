@@ -7,6 +7,6 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Opened += (_, _) => (Content as Control)?.Focus();
+        Opened += (_, _) => Game.Focus();
     }
 }

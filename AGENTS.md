@@ -15,7 +15,7 @@ dotnet publish Galaga/Galaga.csproj -c Release -r osx-x64 --self-contained true 
 
 - `GameEngine` has **no Avalonia dependency** — unit-testable directly
 - `GameCanvas` drives the loop at 16ms (`DispatcherTimer`), dt capped at 50ms
-- Entrypoint: `MainWindow.axaml` hosts `GameCanvas` → 800×600 fixed, non-resizable
+- Entrypoint: `MainWindow.axaml` hosts `GameCanvas` (fixed 800×600 logical space) inside a `Viewbox` so the window is resizable and the game scales uniformly (letterboxed)
 - `--screenshots` CLI flag auto-captures menu + gameplay frames then exits
 - Sound: PCM synthesis at 22050Hz via OpenAL; runs silently if unavailable (`SoundPlayer.IsAvailable`)
 
