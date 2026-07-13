@@ -23,6 +23,19 @@ public class GameCanvas : Control
     private static readonly IBrush Green  = Brushes.LimeGreen;
     private static readonly IBrush Gray   = Brushes.DimGray;
 
+    private static readonly IBrush TitleGlow = new RadialGradientBrush
+    {
+        Center    = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+        RadiusX   = new RelativeScalar(0.5, RelativeUnit.Relative),
+        RadiusY   = new RelativeScalar(0.5, RelativeUnit.Relative),
+        GradientStops = new GradientStops
+        {
+            new GradientStop { Color = Color.FromRgb(255, 170, 60), Offset = 0.0 },
+            new GradientStop { Color = Color.FromRgb(255, 80, 160), Offset = 0.4 },
+            new GradientStop { Color = Colors.Transparent,           Offset = 1.0 },
+        }
+    };
+
     private static readonly IBrush[] StarBrushes =
     {
         new SolidColorBrush(Color.FromRgb(120, 120, 120)),
@@ -46,6 +59,9 @@ public class GameCanvas : Control
 
     // ─── Starfield ──────────────────────────────────────────────────────────
     private (double x, double y, int level)[] _stars = [];
+
+    // ─── Menu decoration (attract-mode enemy formation) ──────────────────────
+    private readonly List<Enemy> _menuDecor = new();
 
     private void InitStars()
     {
@@ -73,6 +89,23 @@ public class GameCanvas : Control
         }
     }
 
+    private void InitMenuDecor()
+    {
+        var defs = new (EnemyType type, double x)[]
+        {
+            (EnemyType.BossGalaga, 400),
+            (EnemyType.Butterfly, 312),
+            (EnemyType.Butterfly, 488),
+            (EnemyType.Bee,        224),
+            (EnemyType.Bee,        576),
+        };
+        foreach (var (type, x) in defs)
+        {
+            var e = new Enemy(type, x, 118, 0) { Y = 118 };
+            _menuDecor.Add(e);
+        }
+    }
+
     public GameCanvas()
     {
         _autoScreenshotMode = Environment.GetCommandLineArgs()
@@ -84,6 +117,7 @@ public class GameCanvas : Control
         _state.HighScore = HighScoreStore.Load();
 
         InitStars();
+        InitMenuDecor();
 
         Focusable = true;
 
@@ -289,6 +323,14 @@ public class GameCanvas : Control
 
         for (int i = 0; i < _state.Player.Lives; i++)
             SpriteRenderer.DrawMiniPlayer(ctx, 10 + i * 22, 578);
+
+        if (_state.Player.HasDualFighter)
+        {
+            int dx = 10 + _state.Player.Lives * 22 + 10;
+            SpriteRenderer.DrawMiniPlayer(ctx, dx,      578);
+            SpriteRenderer.DrawMiniPlayer(ctx, dx + 18, 578);
+            DrawText(ctx, "DUAL", dx + 38, 580, 12, Cyan);
+        }
     }
 
     private void DrawGalagaTitle(DrawingContext ctx)
@@ -345,9 +387,29 @@ public class GameCanvas : Control
 
     private void DrawMenu(DrawingContext ctx)
     {
+        // Pulsing glow behind the title
+        double pulse = 0.5 + 0.5 * Math.Sin(_tickCount * 0.05);
+        double glowR = 130 + pulse * 26;
+        ctx.DrawEllipse(TitleGlow, null, new Point(GameState.GameWidth / 2, 214), glowR, glowR * 0.55);
+
+        // Drifting attract-mode enemy formation
+        double sway = Math.Sin(_tickCount * 0.03) * 26;
+        int i = 0;
+        foreach (var e in _menuDecor)
+        {
+            e.X = e.FormationX + sway;
+            e.Y = 118 + Math.Sin(_tickCount * 0.05 + i) * 6;
+            i++;
+            SpriteRenderer.DrawEnemy(ctx, e, AnimFrame);
+        }
+
         DrawGalagaTitle(ctx);
-        DrawText(ctx, "PRESS SPACE TO START",           null, 290, 24, White,   centered: true);
-        DrawText(ctx, $"HIGH SCORE  {_state.HighScore}", null, 350, 18, Cyan,   centered: true);
+
+        // Blinking prompt
+        if (Math.Floor(_tickCount / 30.0) % 2 == 0)
+            DrawText(ctx, "PRESS SPACE TO START", null, 290, 24, White, centered: true);
+
+        DrawText(ctx, $"HIGH SCORE  {_state.HighScore}", null, 350, 18, Cyan,    centered: true);
         DrawText(ctx, "← → / A D  MOVE    SPACE  SHOOT    P  PAUSE",
                                                         null, 410, 13, Gray,    centered: true);
     }
