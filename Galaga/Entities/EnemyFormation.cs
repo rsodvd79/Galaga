@@ -42,14 +42,14 @@ public class EnemyFormation
         }
     }
 
-    public void Update(double elapsed, double gameWidth, double gameHeight)
+    public void Update(double elapsed, double gameWidth, double gameHeight, double speedMultiplier = 1.0)
     {
-        _oscillationOffset += OscillationSpeed * _oscillationDirection * elapsed;
+        _oscillationOffset += OscillationSpeed * speedMultiplier * _oscillationDirection * elapsed;
         if (Math.Abs(_oscillationOffset) >= MaxOscillation)
             _oscillationDirection *= -1;
 
         foreach (var enemy in Enemies)
-            enemy.Update(elapsed, _oscillationOffset, gameWidth, gameHeight);
+            enemy.Update(elapsed, _oscillationOffset, gameWidth, gameHeight, speedMultiplier);
     }
 
     public bool AllInFormation =>

@@ -27,6 +27,9 @@ public class GameState
     // GameCanvas dequeues these after each tick to trigger audio
     public Queue<SoundEffect> PendingSounds { get; } = new();
 
+    public double EnemySpeedMultiplier =>
+        Math.Min(2.0, 1.0 + (Level - 1) * 0.08);
+
     public void Reset()
     {
         Score  = 0;

@@ -174,6 +174,28 @@ public class GameEngineTests
 
         Assert.Equal(bee.PointsDiving, state.Score);
     }
+
+    [Fact]
+    public void Enemies_move_faster_on_higher_levels()
+    {
+        var lowLevelState = new GameState();
+        lowLevelState.Reset();
+
+        var highLevelState = new GameState();
+        highLevelState.Reset();
+        highLevelState.Level = 6;
+
+        var lowFormation = new EnemyFormation();
+        lowFormation.Initialize();
+
+        var highFormation = new EnemyFormation();
+        highFormation.Initialize();
+
+        lowFormation.Update(1.0, GameState.GameWidth, GameState.GameHeight, lowLevelState.EnemySpeedMultiplier);
+        highFormation.Update(1.0, GameState.GameWidth, GameState.GameHeight, highLevelState.EnemySpeedMultiplier);
+
+        Assert.True(highFormation.OscillationOffsetX > lowFormation.OscillationOffsetX);
+    }
 }
 
 public class CollisionTests

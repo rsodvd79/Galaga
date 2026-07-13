@@ -18,7 +18,7 @@ public class GameEngine
         var formation = _state.Formation;
 
         player.Update(elapsed, GameState.GameWidth);
-        formation.Update(elapsed, GameState.GameWidth, GameState.GameHeight);
+        formation.Update(elapsed, GameState.GameWidth, GameState.GameHeight, _state.EnemySpeedMultiplier);
 
         UpdateBullets(elapsed);
         UpdateExplosions(elapsed);

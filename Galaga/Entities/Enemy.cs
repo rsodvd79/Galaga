@@ -51,27 +51,32 @@ public class Enemy : Entity
         _loopProgress = 0;
     }
 
-    public void Update(double elapsed, double formationOffsetX, double gameWidth, double gameHeight)
+    public void Update(
+        double elapsed,
+        double formationOffsetX,
+        double gameWidth,
+        double gameHeight,
+        double speedMultiplier = 1.0)
     {
         switch (State)
         {
             case EnemyState.FormationEntry:
-                UpdateEntry(elapsed, formationOffsetX);
+                UpdateEntry(elapsed, formationOffsetX, speedMultiplier);
                 break;
             case EnemyState.InFormation:
                 X = FormationX + formationOffsetX;
                 Y = FormationY;
                 break;
             case EnemyState.Diving:
-                UpdateDive(elapsed, gameWidth, gameHeight);
+                UpdateDive(elapsed, gameWidth, gameHeight, speedMultiplier);
                 break;
             case EnemyState.Returning:
-                UpdateReturn(elapsed, formationOffsetX);
+                UpdateReturn(elapsed, formationOffsetX, speedMultiplier);
                 break;
         }
     }
 
-    private void UpdateEntry(double elapsed, double formationOffsetX)
+    private void UpdateEntry(double elapsed, double formationOffsetX, double speedMultiplier)
     {
         if (_entryDelay > 0)
         {
@@ -94,22 +99,24 @@ public class Enemy : Entity
             return;
         }
 
-        const double speed = 220.0;
+        const double baseSpeed = 220.0;
+        double speed = baseSpeed * speedMultiplier;
         X += dx / dist * speed * elapsed;
         Y += dy / dist * speed * elapsed;
     }
 
-    private void UpdateDive(double elapsed, double gameWidth, double gameHeight)
+    private void UpdateDive(double elapsed, double gameWidth, double gameHeight, double speedMultiplier)
     {
         _loopProgress += elapsed;
-        X += Math.Cos(_diveAngle) * _diveSpeed * elapsed;
-        Y += Math.Sin(_diveAngle) * _diveSpeed * elapsed;
+        double diveSpeed = _diveSpeed * speedMultiplier;
+        X += Math.Cos(_diveAngle) * diveSpeed * elapsed;
+        Y += Math.Sin(_diveAngle) * diveSpeed * elapsed;
 
         // Curve toward straight-down (π/2) so the enemy always exits the bottom
         double diff = Math.PI / 2 - _diveAngle;
         while (diff > Math.PI) diff -= 2 * Math.PI;
         while (diff < -Math.PI) diff += 2 * Math.PI;
-        _diveAngle += diff * elapsed * 2.0;
+        _diveAngle += diff * elapsed * 2.0 * speedMultiplier;
 
         if (Y > gameHeight + 50)
         {
@@ -119,7 +126,7 @@ public class Enemy : Entity
         }
     }
 
-    private void UpdateReturn(double elapsed, double formationOffsetX)
+    private void UpdateReturn(double elapsed, double formationOffsetX, double speedMultiplier)
     {
         double targetX = FormationX + formationOffsetX;
         double targetY = FormationY;
@@ -136,7 +143,8 @@ public class Enemy : Entity
             return;
         }
 
-        const double speed = 180.0;
+        const double baseSpeed = 180.0;
+        double speed = baseSpeed * speedMultiplier;
         X += dx / dist * speed * elapsed;
         Y += dy / dist * speed * elapsed;
     }
