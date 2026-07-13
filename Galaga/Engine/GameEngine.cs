@@ -55,15 +55,20 @@ public class GameEngine
 
         if (!player.IsAlive || player.IsRespawning) return;
 
+        int maxBullets = player.HasDualFighter ? Player.MaxBullets * 2 : Player.MaxBullets;
         int playerBullets = _state.Bullets.Count(b => b.Owner == BulletOwner.Player);
-        if (playerBullets < Player.MaxBullets)
+        if (playerBullets >= maxBullets) return;
+
+        if (player.HasDualFighter)
         {
-            _state.Bullets.Add(new Bullet(
-                player.X + player.Width / 2,
-                player.Y,
-                BulletOwner.Player));
-            _state.PendingSounds.Enqueue(SoundEffect.Shoot);
+            _state.Bullets.Add(new Bullet(player.X + 4,                 player.Y, BulletOwner.Player));
+            _state.Bullets.Add(new Bullet(player.X + player.Width - 4, player.Y, BulletOwner.Player));
         }
+        else
+        {
+            _state.Bullets.Add(new Bullet(player.X + player.Width / 2, player.Y, BulletOwner.Player));
+        }
+        _state.PendingSounds.Enqueue(SoundEffect.Shoot);
     }
 
     private void HandleEnemyShooting(EnemyFormation formation, double elapsed)
@@ -123,12 +128,25 @@ public class GameEngine
                 bullet.IsAlive = false;
                 enemy.IsAlive  = false;
 
-                int points = enemy.State == EnemyState.Diving
-                    ? enemy.PointsDiving
-                    : enemy.PointsInFormation;
+                int points;
+                if (enemy.CarriesCapturedShip && _state.Player.Lives > 0)
+                {
+                    _state.Player.GrantDualFighter();
+                    points = (enemy.State == EnemyState.Diving
+                        ? enemy.PointsDiving
+                        : enemy.PointsInFormation) + 1000;
+                    _state.PendingSounds.Enqueue(SoundEffect.Rescue);
+                }
+                else
+                {
+                    points = enemy.State == EnemyState.Diving
+                        ? enemy.PointsDiving
+                        : enemy.PointsInFormation;
+                }
 
                 _state.Score     += points;
                 _state.HighScore  = Math.Max(_state.HighScore, _state.Score);
+                HighScoreStore.Save(_state.HighScore);
 
                 _state.Explosions.Add(new Explosion(
                     enemy.X + enemy.Width  / 2,
@@ -144,12 +162,31 @@ public class GameEngine
 
     private void ResolveEnemyPlayerCollision(EnemyFormation formation, Player player)
     {
-        if (!player.IsAlive) return;
+        if (!player.IsAlive || player.IsInvulnerable) return;
 
         foreach (var enemy in formation.Enemies)
         {
             if (!enemy.IsAlive || enemy.State != EnemyState.Diving) continue;
             if (!enemy.CollidesWith(player)) continue;
+
+            // Boss Galaga tractor-beams and captures the player's fighter
+            // instead of destroying it outright.
+            if (enemy.Type == EnemyType.BossGalaga && !enemy.CarriesCapturedShip)
+            {
+                enemy.CarriesCapturedShip = true;
+                player.Die();
+
+                _state.Explosions.Add(new Explosion(
+                    player.X + player.Width  / 2,
+                    player.Y + player.Height / 2,
+                    radius: 24));
+                _state.PendingSounds.Enqueue(SoundEffect.Capture);
+
+                if (player.Lives <= 0)
+                    _state.Phase = GamePhase.GameOver;
+
+                break;
+            }
 
             enemy.IsAlive = false;
             player.Die();
@@ -169,7 +206,7 @@ public class GameEngine
 
     private void ResolveBulletPlayerCollision(Player player)
     {
-        if (!player.IsAlive) return;
+        if (!player.IsAlive || player.IsInvulnerable) return;
 
         foreach (var bullet in _state.Bullets
             .Where(b => b.Owner == BulletOwner.Enemy && b.IsAlive)

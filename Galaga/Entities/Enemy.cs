@@ -8,6 +8,7 @@ public class Enemy : Entity
 {
     public EnemyType Type { get; }
     public EnemyState State { get; set; } = EnemyState.FormationEntry;
+    public bool CarriesCapturedShip { get; set; }
 
     public double FormationX { get; set; }
     public double FormationY { get; set; }

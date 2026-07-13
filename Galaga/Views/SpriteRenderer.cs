@@ -155,7 +155,7 @@ public static class SpriteRenderer
         {
             case EnemyType.Bee:        DrawBee(ctx, enemy.X, enemy.Y, frame);        break;
             case EnemyType.Butterfly:  DrawButterfly(ctx, enemy.X, enemy.Y, frame);  break;
-            case EnemyType.BossGalaga: DrawBossGalaga(ctx, enemy.X, enemy.Y, frame); break;
+            case EnemyType.BossGalaga: DrawBossGalaga(ctx, enemy, frame); break;
         }
     }
 
@@ -183,8 +183,10 @@ public static class SpriteRenderer
         ctx.FillRectangle(BflyWingDark, new Rect(x + 4.2 * Ps, y + 1.6 * Ps, 0.4 * Ps, Ps));
     }
 
-    private static void DrawBossGalaga(DrawingContext ctx, double x, double y, int frame)
+    private static void DrawBossGalaga(DrawingContext ctx, Enemy enemy, int frame)
     {
+        double x = enemy.X;
+        double y = enemy.Y;
         var px = frame == 0 ? BossPx0 : BossPx1;
         DrawPixels(ctx, px, x, y, BossPalette);
         ctx.FillRectangle(BossMid,  new Rect(x + 1 * Ps, y + 2 * Ps, 6 * Ps, 4 * Ps));
@@ -193,6 +195,20 @@ public static class SpriteRenderer
         ctx.FillRectangle(BossEye,  new Rect(x + 5 * Ps, y + 2 * Ps, Ps, Ps));
         // Core highlight glint
         ctx.FillRectangle(BossHighlight, new Rect(x + 3.5 * Ps, y + 3.3 * Ps, Ps * 0.6, Ps * 0.6));
+
+        // Captured player fighter held beneath the boss
+        if (enemy.CarriesCapturedShip)
+            DrawCapturedShip(ctx, x + 3, y + 26);
+    }
+
+    private static void DrawCapturedShip(DrawingContext ctx, double x, double y)
+    {
+        // Tractor-beam tint (cyan) so it reads as "captured"
+        ctx.FillRectangle(PlayerCockpit,    new Rect(x + 6, y,      4, 11));
+        ctx.FillRectangle(PlayerCockpit,    new Rect(x,     y + 5,  16, 6));
+        ctx.FillRectangle(PlayerAccent,     new Rect(x + 7, y + 2,  2, 3));
+        ctx.FillRectangle(PlayerEngineGlow, new Rect(x + 1, y + 9,  3, 3));
+        ctx.FillRectangle(PlayerEngineGlow, new Rect(x + 12, y + 9, 3, 3));
     }
 
     // ─── Player ship ─────────────────────────────────────────────────────────

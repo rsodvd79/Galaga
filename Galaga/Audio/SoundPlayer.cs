@@ -2,7 +2,7 @@ using Silk.NET.OpenAL;
 
 namespace Galaga.Audio;
 
-public enum SoundEffect { Shoot, EnemyExplosion, PlayerDeath, StageClear }
+public enum SoundEffect { Shoot, EnemyExplosion, PlayerDeath, StageClear, Capture, Rescue }
 
 /// <summary>
 /// Synthesizes and plays retro arcade sounds via OpenAL.
@@ -20,6 +20,8 @@ public sealed unsafe class SoundPlayer : IDisposable
     private uint _explosionBuf;
     private uint _playerDeathBuf;
     private uint _stageClearBuf;
+    private uint _captureBuf;
+    private uint _rescueBuf;
 
     // Small source pool for overlapping playback
     private readonly uint[] _sources = new uint[8];
@@ -49,6 +51,8 @@ public sealed unsafe class SoundPlayer : IDisposable
             _explosionBuf   = CreateBuffer(_al, SynthExplosion());
             _playerDeathBuf = CreateBuffer(_al, SynthPlayerDeath());
             _stageClearBuf  = CreateBuffer(_al, SynthStageClear());
+            _captureBuf     = CreateBuffer(_al, SynthCapture());
+            _rescueBuf      = CreateBuffer(_al, SynthRescue());
 
             IsAvailable = true;
         }
@@ -68,6 +72,8 @@ public sealed unsafe class SoundPlayer : IDisposable
             SoundEffect.EnemyExplosion => _explosionBuf,
             SoundEffect.PlayerDeath    => _playerDeathBuf,
             SoundEffect.StageClear     => _stageClearBuf,
+            SoundEffect.Capture        => _captureBuf,
+            SoundEffect.Rescue         => _rescueBuf,
             _                          => _shootBuf
         };
 
@@ -134,6 +140,45 @@ public sealed unsafe class SoundPlayer : IDisposable
         return buf;
     }
 
+    private static short[] SynthCapture()
+    {
+        // Warbling tractor-beam: descending tone with wobble
+        int n = (int)(SampleRate * 0.5f);
+        var buf = new short[n];
+        double ph = 0;
+        for (int i = 0; i < n; i++)
+        {
+            float t    = (float)i / n;
+            float freq = 420f - 280f * t + (float)Math.Sin(t * 40.0) * 45f;
+            float amp  = 0.3f * (1f - t * 0.5f);
+            ph += freq / SampleRate;
+            float val = (ph % 1.0) < 0.5 ? 1f : -1f;
+            buf[i] = (short)(val * amp * short.MaxValue);
+        }
+        return buf;
+    }
+
+    private static short[] SynthRescue()
+    {
+        // Ascending C4-G4-C5-E5 arpeggio (the dual-fighter reward)
+        float[] freqs   = { 261.6f, 392f, 523.3f, 659.3f };
+        int     perNote = SampleRate / 9;
+        var     buf     = new short[freqs.Length * perNote];
+        for (int k = 0; k < freqs.Length; k++)
+        {
+            double phase = 0;
+            for (int i = 0; i < perNote; i++)
+            {
+                float t   = (float)i / perNote;
+                float amp = 0.32f * (1f - t * 0.4f);
+                phase += freqs[k] / SampleRate;
+                float val = (phase % 1.0) < 0.5 ? 1f : -1f;
+                buf[k * perNote + i] = (short)(val * amp * short.MaxValue);
+            }
+        }
+        return buf;
+    }
+
     private static short[] FreqSweep(float startHz, float endHz, float seconds, float amp)
     {
         int    n   = (int)(SampleRate * seconds);
@@ -163,6 +208,8 @@ public sealed unsafe class SoundPlayer : IDisposable
         _al.DeleteBuffer(_explosionBuf);
         _al.DeleteBuffer(_playerDeathBuf);
         _al.DeleteBuffer(_stageClearBuf);
+        _al.DeleteBuffer(_captureBuf);
+        _al.DeleteBuffer(_rescueBuf);
         _alc.DestroyContext(_ctx);
         _alc.CloseDevice(_device);
         _al.Dispose();

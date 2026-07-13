@@ -176,6 +176,93 @@ public class GameEngineTests
     }
 
     [Fact]
+    public void Player_is_invulnerable_after_respawn()
+    {
+        var (engine, state) = CreateGame();
+        state.Formation.Enemies.Clear();
+        state.Player.Lives = 2;
+
+        state.Player.Die();                 // enter respawn
+        state.Player.RespawnTimer = 0.0001; // almost done
+        engine.Tick(0.016);
+
+        Assert.True(state.Player.IsAlive);
+        Assert.True(state.Player.IsInvulnerable);
+    }
+
+    [Fact]
+    public void Invulnerable_player_cannot_be_killed()
+    {
+        var (engine, state) = CreateGame();
+        state.Formation.Enemies.Clear();
+        state.Player.Lives = 2;
+
+        state.Player.Die();
+        state.Player.RespawnTimer = 0.0001;
+        engine.Tick(0.016);                 // completes respawn -> invulnerable
+        int livesBefore = state.Player.Lives;
+
+        state.Bullets.Add(new Bullet(
+            state.Player.X + state.Player.Width / 2,
+            state.Player.Y + 1,
+            BulletOwner.Enemy));
+        engine.Tick(0.016);
+
+        Assert.True(state.Player.IsAlive);
+        Assert.Equal(livesBefore, state.Player.Lives);
+    }
+
+    [Fact]
+    public void Diving_boss_captures_player()
+    {
+        var (engine, state) = CreateGame();
+        state.Formation.Enemies.Clear();
+        state.Player.Lives = 2;
+
+        var boss = new Enemy(EnemyType.BossGalaga, 400, 300, 0)
+        {
+            State = EnemyState.Diving,
+            X = state.Player.X,
+            Y = state.Player.Y
+        };
+        state.Formation.Enemies.Add(boss);
+
+        engine.Tick(0.016);
+
+        Assert.True(boss.CarriesCapturedShip);
+        Assert.Equal(1, state.Player.Lives);
+        Assert.False(state.Player.IsAlive); // lost a life, now respawning
+    }
+
+    [Fact]
+    public void Killing_capturing_boss_rescues_dual_fighter()
+    {
+        var (engine, state) = CreateGame();
+        state.Formation.Enemies.Clear();
+
+        var boss = new Enemy(EnemyType.BossGalaga, 400, 300, 0)
+        {
+            State = EnemyState.InFormation,
+            FormationX = 400,
+            FormationY = 300,
+            X = 400,
+            Y = 300,
+            CarriesCapturedShip = true
+        };
+        state.Formation.Enemies.Add(boss);
+        state.Player.Lives = 2;
+
+        state.Bullets.Add(new Bullet(
+            boss.X + boss.Width / 2,
+            boss.Y + 1,
+            BulletOwner.Player));
+        engine.Tick(0.016);
+
+        Assert.False(boss.IsAlive);
+        Assert.True(state.Player.HasDualFighter);
+    }
+
+    [Fact]
     public void Enemies_move_faster_on_higher_levels()
     {
         var lowLevelState = new GameState();

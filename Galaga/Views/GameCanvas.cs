@@ -81,6 +81,8 @@ public class GameCanvas : Control
         _engine = new GameEngine(_state);
         _sound  = new SoundPlayer();
 
+        _state.HighScore = HighScoreStore.Load();
+
         InitStars();
 
         Focusable = true;
@@ -253,9 +255,19 @@ public class GameCanvas : Control
         foreach (var enemy in _state.Formation.Enemies.Where(e => e.IsAlive))
             SpriteRenderer.DrawEnemy(ctx, enemy, AnimFrame);
 
-        // Player
+        // Player (blinks while invulnerable after respawn)
         if (_state.Player.IsAlive)
-            SpriteRenderer.DrawPlayer(ctx, _state.Player.X, _state.Player.Y, AnimFrame);
+        {
+            bool blink = _state.Player.IsInvulnerable &&
+                         Math.Floor(_state.Player.InvulnerabilityRemaining * 6) % 2 == 0;
+            if (!blink)
+            {
+                SpriteRenderer.DrawPlayer(ctx, _state.Player.X, _state.Player.Y, AnimFrame);
+                if (_state.Player.HasDualFighter)
+                    SpriteRenderer.DrawPlayer(ctx, _state.Player.X + _state.Player.Width,
+                        _state.Player.Y, AnimFrame);
+            }
+        }
 
         // Bullets
         foreach (var bullet in _state.Bullets)
