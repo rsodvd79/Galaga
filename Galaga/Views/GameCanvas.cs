@@ -279,9 +279,61 @@ public class GameCanvas : Control
             SpriteRenderer.DrawMiniPlayer(ctx, 10 + i * 22, 578);
     }
 
+    private void DrawGalagaTitle(DrawingContext ctx)
+    {
+        const string text = "GALAGA";
+        const double size = 52;
+        const double y = 190;
+
+        var colors = new IBrush[]
+        {
+            new SolidColorBrush(Color.FromRgb(255, 80, 160)),
+            new SolidColorBrush(Color.FromRgb(255, 215, 0)),
+            new SolidColorBrush(Color.FromRgb(50, 205, 50)),
+            new SolidColorBrush(Color.FromRgb(255, 215, 0)),
+            new SolidColorBrush(Color.FromRgb(255, 80, 160)),
+            new SolidColorBrush(Color.FromRgb(255, 215, 0)),
+        };
+
+        var widths = new double[text.Length];
+        double totalWidth = 0;
+        for (int i = 0; i < text.Length; i++)
+        {
+            var ft = new FormattedText(text[i].ToString(), CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight, Typeface.Default, size, Brushes.White);
+            widths[i] = ft.Width;
+            totalWidth += ft.Width;
+        }
+
+        double startX = (GameState.GameWidth - totalWidth) / 2;
+        double shadowOffset = 3;
+
+        foreach (var shadowColor in new[] { Color.FromRgb(60, 0, 0), Color.FromRgb(120, 30, 0) })
+        {
+            double sx = startX + shadowOffset;
+            var shadow = new SolidColorBrush(shadowColor);
+            for (int i = 0; i < text.Length; i++)
+            {
+                var ft = new FormattedText(text[i].ToString(), CultureInfo.InvariantCulture,
+                    FlowDirection.LeftToRight, Typeface.Default, size, shadow);
+                ctx.DrawText(ft, new Point(sx, y + shadowOffset));
+                sx += widths[i];
+            }
+        }
+
+        double cx = startX;
+        for (int i = 0; i < text.Length; i++)
+        {
+            var ft = new FormattedText(text[i].ToString(), CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight, Typeface.Default, size, colors[i]);
+            ctx.DrawText(ft, new Point(cx, y));
+            cx += widths[i];
+        }
+    }
+
     private void DrawMenu(DrawingContext ctx)
     {
-        DrawText(ctx, "GALAGA",                         null, 190, 52, Yellow,  centered: true);
+        DrawGalagaTitle(ctx);
         DrawText(ctx, "PRESS SPACE TO START",           null, 290, 24, White,   centered: true);
         DrawText(ctx, $"HIGH SCORE  {_state.HighScore}", null, 350, 18, Cyan,   centered: true);
         DrawText(ctx, "← → / A D  MOVE    SPACE  SHOOT    P  PAUSE",
