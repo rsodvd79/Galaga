@@ -156,6 +156,7 @@ public sealed unsafe class SoundPlayer : IDisposable
     public void Dispose()
     {
         if (!IsAvailable || _al is null || _alc is null) return;
+        IsAvailable = false;
 
         foreach (var src in _sources) _al.DeleteSource(src);
         _al.DeleteBuffer(_shootBuf);

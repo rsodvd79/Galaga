@@ -89,9 +89,8 @@ public class GameEngine
 
     private void TriggerEnemyDives(EnemyFormation formation, Player player)
     {
-        if (!formation.AllInFormation) return;
-
-        // Limit concurrent divers to 2
+        // Limit concurrent divers to 2 (checked independently of formation state,
+        // so a new dive can start while other enemies are already Diving/Returning)
         int activeDivers = formation.Enemies.Count(e => e.IsAlive && e.State == EnemyState.Diving);
         if (activeDivers >= 2) return;
 

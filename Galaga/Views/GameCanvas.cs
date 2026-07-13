@@ -128,7 +128,7 @@ public class GameCanvas : Control
             case Key.Space:
                 if (_state.Phase is GamePhase.Menu or GamePhase.GameOver)
                     _state.Reset();
-                else
+                else if (_state.Phase == GamePhase.Playing)
                     _state.ShootPressed = true;
                 break;
 
@@ -141,7 +141,10 @@ public class GameCanvas : Control
 
             case Key.Escape:
                 if (_state.Phase != GamePhase.Menu)
+                {
                     _state.Phase = GamePhase.Menu;
+                    _state.ShootPressed = false;
+                }
                 break;
 
             case Key.F12:
