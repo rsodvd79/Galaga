@@ -30,7 +30,7 @@ Una fedele ricreazione arcade del classico **Galaga** (1981), realizzata con **.
 - 💥 **Effetti esplosione** — particelle in espansione (bianco → giallo → arancione → rosso)
 - 💀 **Collisione nemico-giocatore** — i nemici in picchiata uccidono il giocatore al contatto
 - 🔊 **Audio sintetizzato** — sparo, esplosione, morte del giocatore e suoni di fine livello generati come forme d'onda PCM tramite OpenAL
-- 📈 **Difficoltà progressiva** — velocità nemica e frequenza di fuoco aumentano ad ogni livello
+- 📈 **Difficoltà progressiva** — i nemici si muovono più velocemente e la frequenza di fuoco aumenta ad ogni livello
 - 🏆 **Punteggio massimo persistente** — mantenuto tra i reset durante la sessione
 - 🚀 **Navicella migliorata** — ali sagomate, abitacolo con highlight, bagliori motore a due toni
 
@@ -194,7 +194,7 @@ I suoni vengono sintetizzati a runtime come PCM a 22050 Hz e riprodotti tramite 
 dotnet test
 ```
 
-15 test unitari coprono i livelli `GameEngine` ed `Entities` (nessuna dipendenza dall'interfaccia grafica):
+16 test unitari coprono i livelli `GameEngine` ed `Entities` (nessuna dipendenza dall'interfaccia grafica):
 
 - Vite, limite proiettili e respawn del giocatore
 - Rilevamento collisioni (AABB, guardia entità morte)
