@@ -31,7 +31,10 @@ Una fedele ricreazione arcade del classico **Galaga** (1981), realizzata con **.
 - 💀 **Collisione nemico-giocatore** — i nemici in picchiata uccidono il giocatore al contatto
 - 🔊 **Audio sintetizzato** — sparo, esplosione, morte del giocatore e suoni di fine livello generati come forme d'onda PCM tramite OpenAL
 - 📈 **Difficoltà progressiva** — i nemici si muovono più velocemente e la frequenza di fuoco aumenta ad ogni livello
-- 🏆 **Punteggio massimo persistente** — mantenuto tra i reset durante la sessione
+- 🏆 **Punteggio massimo persistente** — salvato su disco (JSON in `~/.local/share/Galaga`), sopravvive alla chiusura del gioco
+- 🛡️ **Invulnerabilità post-respawn** — 2 secondi di lampeggio dopo la riapparizione, nessuna collisione
+- 👾 **Cattura del Boss Galaga** — un boss in picchiata può catturare la tua nave; abbatterlo mentre la trasporta sblocca il **dual-fighter** (+1000 pt, doppio fuoco)
+- 🖥️ **Schermata iniziale animata** — glow pulsante sul titolo, formazione nemica decorativa in stile attract-mode e prompt "PRESS SPACE" lampeggiante
 - 🚀 **Navicella migliorata** — ali sagomate, abitacolo con highlight, bagliori motore a due toni
 
 ---
@@ -46,7 +49,7 @@ Una fedele ricreazione arcade del classico **Galaga** (1981), realizzata con **.
 | `P` | Pausa / Riprendi |
 | `Esc` | Torna al menu principale |
 
-> **Suggerimento:** Puoi avere al massimo **2 proiettili del giocatore** sullo schermo contemporaneamente — proprio come nell'originale.
+> **Suggerimento:** Puoi avere al massimo **2 proiettili** sullo schermo con la navicella singola, o **4** con il dual-fighter.
 
 ---
 
@@ -76,6 +79,8 @@ Riga 4: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶
 - Il livello termina quando tutti i 40 nemici sono distrutti; quello successivo inizia dopo 2,5 s
 - Fino a **2 nemici in picchiata simultaneamente**; i picchiatori che mancano il bersaglio curvano verso il basso ed escono dallo schermo, poi rientrano dall'alto
 - I nemici in picchiata che **colpiscono il giocatore** lo uccidono e muoiono a loro volta
+- **Invulnerabilità post-respawn:** per 2 s dopo la riapparizione la navicella lampeggia e non può essere colpita
+- **Cattura e dual-fighter:** se un Boss Galaga in picchiata ti tocca, ti cattura (perdi una vita) e trasporta la tua nave; distruggendolo mentre la trasporta liberi il dual-fighter (due navi affiancate, fuoco doppio, +1000 pt). Morire fa perdere il dual-fighter
 
 ---
 
@@ -114,11 +119,12 @@ dotnet publish Galaga/Galaga.csproj -c Release -o publish/
 Galaga/
 ├── Engine/
 │   ├── GameEngine.cs       # Logica di gioco pura: ciclo tick, collisioni, IA, punteggio
-│   └── GameState.cs        # Tutto lo stato mutabile (fase, punteggio, vite, liste entità)
+│   ├── GameState.cs        # Tutto lo stato mutabile (fase, punteggio, vite, liste entità)
+│   └── HighScoreStore.cs   # Persistenza punteggio massimo su file JSON
 ├── Entities/
 │   ├── Entity.cs           # Base astratta: posizione, dimensione, collisione AABB
-│   ├── Player.cs           # Movimento, limite proiettili, timer respawn
-│   ├── Enemy.cs            # Macchina a stati per ciascun nemico
+│   ├── Player.cs           # Movimento, limite proiettili, respawn, invulnerabilità, dual-fighter
+│   ├── Enemy.cs            # Macchina a stati per ciascun nemico (supporta cattura navi)
 │   ├── EnemyFormation.cs   # Griglia, oscillazione, ondate di entrata
 │   ├── Bullet.cs           # Direzione determinata dall'enum BulletOwner
 │   └── Explosion.cs        # Dati visivi della particella di esplosione
@@ -126,7 +132,7 @@ Galaga/
 │   ├── GameCanvas.cs       # Controllo Avalonia: timer 60 fps, eventi tastiera, Render()
 │   └── SpriteRenderer.cs   # Tutto il codice di disegno (pixel-art + geometria)
 └── Audio/
-    └── SoundPlayer.cs      # Sintesi OpenAL (sparo, esplosione, morte, arpeggio)
+    └── SoundPlayer.cs      # Sintesi OpenAL (sparo, esplosione, morte, fine livello, cattura, rescue)
 ```
 
 ### Flusso dei dati
@@ -171,7 +177,7 @@ FormationEntry ──(raggiunge lo slot)──► InFormation
 
 > **Regola chiave:** Nello stato `InFormation`, `Enemy.Update()` **aggancia** `X/Y` a `FormationX + oscillationOffset` ad ogni tick. Impostare `X`/`Y` direttamente non ha effetto duraturo se non vengono aggiornati anche `FormationX`/`FormationY`.
 >
-> **Collisione con il giocatore:** I nemici in stato `Diving` che toccano il giocatore lo uccidono e muoiono a loro volta.
+> **Collisione con il giocatore:** I nemici in stato `Diving` che toccano il giocatore lo uccidono e muoiono a loro volta — *tranne* il **Boss Galaga**, che invece lo cattura e trasporta la nave finché non lo distruggi (liberando il dual-fighter).
 
 ---
 
@@ -185,6 +191,8 @@ I suoni vengono sintetizzati a runtime come PCM a 22050 Hz e riprodotti tramite 
 | Esplosione nemica | Rumore bianco + rumble 80 Hz, 220 ms |
 | Morte del giocatore | Onda quadra, sweep 580 → 55 Hz, 600 ms |
 | Fine livello | Arpeggio Do4–Mi4–Sol4–Do5, onda quadra |
+| Cattura (Boss) | Fascio "tractor-beam": tono oscillante discendente, 500 ms |
+| Rescue (dual-fighter) | Arpeggio ascendente Do4–Sol4–Do5–Mi5, onda quadra |
 
 ---
 
@@ -194,11 +202,13 @@ I suoni vengono sintetizzati a runtime come PCM a 22050 Hz e riprodotti tramite 
 dotnet test
 ```
 
-16 test unitari coprono i livelli `GameEngine` ed `Entities` (nessuna dipendenza dall'interfaccia grafica):
+20 test unitari coprono i livelli `GameEngine` ed `Entities` (nessuna dipendenza dall'interfaccia grafica):
 
 - Vite, limite proiettili e respawn del giocatore
+- Invulnerabilità post-respawn e mancata uccisione durante il lampeggio
+- Cattura del Boss Galaga e rescue del dual-fighter
 - Rilevamento collisioni (AABB, guardia entità morte)
-- Punteggio (bonus formazione vs. picchiata)
+- Punteggio (bonus formazione vs. picchiata, +1000 rescue)
 - Transizioni game over e fine livello
 - Inizializzazione della formazione
 - Morte del giocatore per collisione con nemico in picchiata
