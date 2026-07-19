@@ -6,8 +6,15 @@ public class Player : Entity
     public const int MaxBullets = 2;
     public const double RespawnDuration = 2.0;
     public const double InvulnerabilityDuration = 2.0;
-    public const double DefaultX = 385.0;
-    public const double DefaultY = 540.0;
+    // Logical sprite size used by SpriteRenderer
+    public const double SpritePixelScale = 2.0;
+    public const int SpriteCols = 16;
+    public const int SpriteRows = 16;
+    public const double SpriteWidth  = SpriteCols * SpritePixelScale; // 32
+    public const double SpriteHeight = SpriteRows * SpritePixelScale; // 32
+
+    public const double DefaultX = 384.0;
+    public const double DefaultY = 548.0;
 
     public int Lives { get; set; } = 3;
     public bool MoveLeft { get; set; }
@@ -21,7 +28,7 @@ public class Player : Entity
 
     public bool HasDualFighter { get; private set; }
 
-    public Player(double x, double y) : base(x, y, 30, 20) { }
+    public Player(double x, double y) : base(x, y, SpriteWidth, SpriteHeight) { }
 
     public void Update(double elapsed, double gameWidth)
     {

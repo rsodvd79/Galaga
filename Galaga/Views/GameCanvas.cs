@@ -38,9 +38,18 @@ public class GameCanvas : Control
 
     private static readonly IBrush[] StarBrushes =
     {
-        new SolidColorBrush(Color.FromRgb(120, 120, 120)),
-        new SolidColorBrush(Color.FromRgb(190, 190, 190)),
-        new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+        new SolidColorBrush(Color.FromRgb(90,  90,  90)),   // distant / dim
+        new SolidColorBrush(Color.FromRgb(170, 170, 170)), // mid
+        new SolidColorBrush(Color.FromRgb(255, 255, 255)), // near / bright
+        new SolidColorBrush(Color.FromRgb(200, 220, 255)), // near / blue-ish
+    };
+
+    private static readonly double[] StarSpeeds =
+    {
+        15.0,
+        35.0,
+        60.0,
+        90.0,
     };
 
     // ─── Game state ─────────────────────────────────────────────────────────
@@ -66,11 +75,11 @@ public class GameCanvas : Control
     private void InitStars()
     {
         var rng = Random.Shared;
-        _stars  = new (double, double, int)[90];
+        _stars  = new (double, double, int)[110];
         for (int i = 0; i < _stars.Length; i++)
             _stars[i] = (rng.NextDouble() * GameState.GameWidth,
                          rng.NextDouble() * GameState.GameHeight,
-                         rng.Next(3));
+                         rng.Next(StarBrushes.Length));
     }
 
     private void UpdateStars(double elapsed)
@@ -79,7 +88,7 @@ public class GameCanvas : Control
         var rng = Random.Shared;
         for (int i = 0; i < _stars.Length; i++)
         {
-            var speed = _stars[i].level switch { 2 => 60.0, 1 => 40.0, _ => 20.0 };
+            var speed = StarSpeeds[_stars[i].level];
             _stars[i].y += speed * elapsed;
             if (_stars[i].y >= h)
             {
@@ -265,10 +274,12 @@ public class GameCanvas : Control
         // Background
         ctx.FillRectangle(Black, new Rect(0, 0, GameState.GameWidth, GameState.GameHeight));
 
-        // Stars
+        // Stars — size and opacity vary by depth level
         foreach (var (sx, sy, lvl) in _stars)
         {
-            double sz = lvl == 2 ? 2 : 1;
+            double sz = lvl switch { 3 => 3, 2 => 2, _ => 1 };
+            double opacity = lvl switch { 3 => 1.0, 2 => 0.9, 1 => 0.65, _ => 0.45 };
+            using var starOpacity = ctx.PushOpacity(opacity);
             ctx.FillRectangle(StarBrushes[lvl], new Rect(sx, sy, sz, sz));
         }
 
@@ -296,7 +307,7 @@ public class GameCanvas : Control
                          Math.Floor(_state.Player.InvulnerabilityRemaining * 6) % 2 == 0;
             if (!blink)
             {
-                SpriteRenderer.DrawPlayer(ctx, _state.Player.X, _state.Player.Y, AnimFrame);
+                SpriteRenderer.DrawPlayer(ctx, _state.Player, AnimFrame);
                 if (_state.Player.HasDualFighter)
                     SpriteRenderer.DrawPlayer(ctx, _state.Player.X + _state.Player.Width,
                         _state.Player.Y, AnimFrame);
@@ -305,10 +316,7 @@ public class GameCanvas : Control
 
         // Bullets
         foreach (var bullet in _state.Bullets)
-        {
-            var brush = bullet.Owner == BulletOwner.Player ? Green : Red;
-            ctx.FillRectangle(brush, new Rect(bullet.X, bullet.Y, bullet.Width, bullet.Height));
-        }
+            SpriteRenderer.DrawBullet(ctx, bullet);
 
         // Explosions (drawn on top)
         foreach (var exp in _state.Explosions)
@@ -432,6 +440,8 @@ public class GameCanvas : Control
     }
 
     // ─── Text helper ─────────────────────────────────────────────────────────
+    private static readonly IBrush TextShadow = new SolidColorBrush(Colors.Black);
+
     private static void DrawText(
         DrawingContext ctx,
         string text,
@@ -450,6 +460,20 @@ public class GameCanvas : Control
             brush);
 
         double px = centered ? (GameState.GameWidth - ft.Width) / 2 : x ?? 0;
+
+        // Drop shadow for readability over stars/explosions.
+        using (ctx.PushOpacity(0.7))
+        {
+            var shadowFt = new FormattedText(
+                text,
+                CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight,
+                Typeface.Default,
+                size,
+                TextShadow);
+            ctx.DrawText(shadowFt, new Point(px + 1, y + 1));
+        }
+
         ctx.DrawText(ft, new Point(px, y));
     }
 }
