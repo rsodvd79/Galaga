@@ -81,8 +81,10 @@ Il canvas deve avere il focus per ricevere i comandi.
   Velocita' crescente fino al doppio di quella iniziale.
 - Sei suoni sintetizzati a 22050 Hz: sparo, esplosione, morte, fine livello,
   cattura e rescue; fino a otto voci sovrapposte.
-- Menu animato, 110 stelle a quattro profondita', sprite a due frame,
-  scie, esplosioni e ridimensionamento uniforme con bande nere.
+- Menu animato, 110 stelle discrete a quattro profondita' con scie sfumate,
+  sprite dettagliati a due frame, riflessi sulle corazze e bagliori dei motori,
+  colpi luminosi con scie direzionali, esplosioni con onde d'urto e scintille,
+  ridimensionamento uniforme con bande nere.
 
 La versione Rust usa un **nuovo record**, senza leggere o cancellare quello
 della versione C#. Eframe lo salva nel proprio storage desktop o in localStorage
@@ -99,8 +101,9 @@ cargo check --target wasm32-unknown-unknown --lib --locked
 cargo run --release --locked -- --screenshots
 ```
 
-37 test Rust coprono il port dei 20 casi originali e regressioni per loop,
-pausa, avanzamento livello, dual, audio, record, viewport e PNG.
+41 test Rust coprono il port dei 20 casi originali e regressioni per loop,
+pausa, avanzamento livello, dual, audio, record, viewport, sprite, scie,
+proiettili, esplosioni e PNG.
 `--screenshots` salva menu e gameplay a 800x600 in `screenshots/` e chiude
 solo dopo la scrittura. Non richiede input; usa un seed fisso per le catture.
 Le differenze di rastering dei font fra piattaforme sono normali.
