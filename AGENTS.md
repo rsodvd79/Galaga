@@ -1,41 +1,52 @@
 # Galaga — Agent Guide
 
-Stack: **.NET 8 · Avalonia 11 · xUnit · Silk.NET.OpenAL**
+Rust 2024 (MSRV 1.95), eframe/egui 0.37 with glow, rodio on desktop and
+Web Audio on wasm. One Cargo package, library `galaga_core`, binary `galaga`.
 
 ## Commands
 
-```bash
-dotnet run --project Galaga/Galaga.csproj   # run game
-dotnet test                                  # all tests (13)
-dotnet test --filter "FullyQualifiedName~Player_dies_when_hit_by_enemy_bullet"  # single test
-dotnet publish Galaga/Galaga.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o publish/
+```sh
+cargo run --release --locked
+cargo test --locked
+cargo test --locked player_dies_when_hit_by_enemy_bullet
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features --locked -- -D warnings
+cargo clippy --target wasm32-unknown-unknown --lib --locked -- -D warnings
+trunk build --release --locked
+cargo run --release --locked -- --screenshots
 ```
 
-## Architecture
+Install the wasm target and Trunk 0.21.14 for web. See README for native
+system dependencies and browser smoke tests. CI produces native archives
+and a static web archive; no Pages deployment.
 
-- `GameEngine` has **no Avalonia dependency** — unit-testable directly
-- `GameCanvas` drives the loop at 16ms (`DispatcherTimer`), dt capped at 50ms
-- Entrypoint: `MainWindow.axaml` hosts `GameCanvas` (fixed 800×600 logical space) inside a `Viewbox` so the window is resizable and the game scales uniformly (letterboxed)
-- `--screenshots` CLI flag auto-captures menu + gameplay frames then exits
-- Sound: PCM synthesis at 22050Hz via OpenAL; runs silently if unavailable (`SoundPlayer.IsAvailable`)
+## Boundaries and invariants
 
-## Engine Quirks
+- `game.rs` and `entities.rs` are pure domain logic, using f64 and no egui
+  geometry, persistence or device APIs. Use owned structs/enums and Vec.
+- `Game::new(seed)` makes randomness reproducible. Tests do not write files.
+- `app.rs` advances at 16 ms with an accumulator, caps elapsed time at 50 ms
+  and updates once per egui frame, not once per layout pass.
+- The game area is always 800x600; only `render.rs` transforms/clips it for
+  letterboxing and DPI. Keep current hitboxes, including the dual-fighter.
+- In `EnemyState::Formation`, update snaps x/y to formation_x + offset and
+  formation_y. Collision tests must set both position and formation slot.
+- `Game::tick` returns unless Playing. GameOver must not be overwritten by
+  StageClear when the last enemy and last player life disappear together.
+- Respawn and invulnerability last 2 s each; the player updates its own
+  respawn state. Dead bodies never collide. StageClear lasts 2.5 s.
+- Boss capture loses a life. Killing a carrying boss with lives remaining
+  grants dual-fighter and +1000 points; dying clears dual.
+- The app drains sound events and flushes increased records after ticks.
+  Audio/storage/screenshot failure must not stop ordinary gameplay.
+- The record starts fresh in Rust. Never read or remove legacy C# saves.
+- Browser AudioContext must be created/resumed inside an actual DOM gesture,
+  not just the later egui repaint. Native dependencies must not enter wasm.
+- Screenshot callbacks are asynchronous. Preserve the requested phase and
+  wait for completion before advancing auto-capture or closing the window.
+- Reuse procedural ASCII sprites/palettes and existing icons. No sprite
+  sheets, ECS, async runtime or speculative abstraction layers.
 
-- `GameEngine.Tick()` exits immediately if `Phase != Playing` — order terminal-phase writes carefully in a single tick
-- `Enemy` state machine: `FormationEntry` → `InFormation` → `Diving` → `Returning` → `InFormation`
-- **In `InFormation` state**, `Enemy.Update()` **snaps** X/Y to `FormationX + oscillationOffset` / `FormationY` every tick. Setting X/Y directly has no lasting effect unless you also update `FormationX`/`FormationY`
-- `Player.Die()` sets `IsAlive = false`, starts 2s `RespawnTimer`; `Player.Update()` restores `IsAlive` automatically when timer expires
-- Dead entities (`IsAlive = false`) never collide (`Entity.CollidesWith` checks both sides)
-- Starfield generated once with `Random(42)` in `GameCanvas` constructor
-- All drawing via `DrawingContext.FillRectangle` — no image files or sprite sheets
-- `AllowUnsafeBlocks` enabled (OpenAL interop)
-
-## Testing Quirks
-
-- Tests manipulate `GameState` directly + call `engine.Tick(dt)`
-- For collision tests, set **both** `FormationX`/`FormationY` and `X`/`Y` on the enemy (see `Score_increases_when_in_formation_bee_is_killed`)
-- Clear `state.Formation.Enemies` when testing player-specific behavior to avoid stage-clear loop exit
-
-## Reference
-
-- `Galaga/.github/copilot-instructions.md` — earlier instructions (archived but compatible)
+Generated `target/`, `dist/`, `publish/` and app bundles are ignored.
+Keep Cargo.lock committed. Release builds for other platforms must not be
+claimed runtime-tested merely because compilation succeeded.

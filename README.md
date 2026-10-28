@@ -1,232 +1,155 @@
-# 🚀 Galaga — Clone in C# / Avalonia
+# Galaga — Rust + eframe
 
-Una fedele ricreazione arcade del classico **Galaga** (1981), realizzata con **.NET 8** e **Avalonia UI**: sprite pixel-art disegnati interamente in codice, audio retro sintetizzato e un motore di gioco pulito basato su entità.
-
-```
- ██████╗  █████╗ ██╗      █████╗  ██████╗  █████╗
-██╔════╝ ██╔══██╗██║     ██╔══██╗██╔════╝ ██╔══██╗
-██║  ███╗███████║██║     ███████║██║  ███╗███████║
-██║   ██║██╔══██║██║     ██╔══██║██║   ██║██╔══██║
-╚██████╔╝██║  ██║███████╗██║  ██║╚██████╔╝██║  ██║
- ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝
-```
-
----
-
-## 📸 Screenshot
+Clone arcade con sprite pixel-art disegnati in codice e audio sintetizzato.
+Un unico motore Rust alimenta l'app desktop e il canvas WebAssembly.
 
 | Menu | Gameplay |
 |------|----------|
-| ![Schermata menu](screenshots/galaga_menu.png) | ![Gameplay](screenshots/galaga_playing.png) |
+| ![Menu](screenshots/galaga_menu.png) | ![Gameplay](screenshots/galaga_playing.png) |
 
----
+## Avvio desktop
 
-## ✨ Funzionalità
+Richiede Rust **1.95 o successivo** con Cargo. Supporto previsto: Windows x64,
+Linux x64, macOS Intel e Apple Silicon. Non servono .NET, Avalonia o OpenAL.
 
-- 🎮 **Gameplay classico di Galaga** — entrata in formazione, attacchi in picchiata, griglia nemica oscillante
-- 🌟 **Sfondo stellare dinamico** — 90 stelle con parallasse a 3 velocità, rigenerate casualmente ad ogni partita
-- 🖼️ **Sprite pixel-art** — Ape, Farfalla, Boss Galaga e navicella del giocatore, tutti disegnati con geometria Avalonia (nessun file immagine)
-- 🎞️ **Animazione nemica a 2 frame** — le ali battono a ~7,5 Hz, fedele alla sensazione dell'arcade originale
-- 💥 **Effetti esplosione** — particelle in espansione (bianco → giallo → arancione → rosso)
-- 💀 **Collisione nemico-giocatore** — i nemici in picchiata uccidono il giocatore al contatto
-- 🔊 **Audio sintetizzato** — sparo, esplosione, morte del giocatore e suoni di fine livello generati come forme d'onda PCM tramite OpenAL
-- 📈 **Difficoltà progressiva** — i nemici si muovono più velocemente e la frequenza di fuoco aumenta ad ogni livello
-- 🏆 **Punteggio massimo persistente** — salvato su disco (JSON in `~/.local/share/Galaga`), sopravvive alla chiusura del gioco
-- 🛡️ **Invulnerabilità post-respawn** — 2 secondi di lampeggio dopo la riapparizione, nessuna collisione
-- 👾 **Cattura del Boss Galaga** — un boss in picchiata può catturare la tua nave; abbatterlo mentre la trasporta sblocca il **dual-fighter** (+1000 pt, doppio fuoco)
-- 🖥️ **Schermata iniziale animata** — glow pulsante sul titolo, formazione nemica decorativa in stile attract-mode e prompt "PRESS SPACE" lampeggiante
-- 🚀 **Navicella migliorata** — ali sagomate, abitacolo con highlight, bagliori motore a due toni
+```sh
+cargo run --release --locked
+```
 
----
+Su Debian/Ubuntu, installare prima le librerie di sviluppo:
 
-## 🕹️ Controlli
+```sh
+sudo apt-get install build-essential pkg-config libasound2-dev libxkbcommon-dev \
+  libx11-dev libxi-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev libegl1-mesa-dev
+```
+
+Su Windows serve il toolchain Rust MSVC con Visual Studio Build Tools; su macOS
+gli Xcode Command Line Tools. L'app usa OpenGL; se il dispositivo audio non e'
+disponibile continua senza suono.
+
+## Browser / WebAssembly
+
+Installare il target wasm e [Trunk](https://trunkrs.dev/), quindi:
+
+```sh
+rustup target add wasm32-unknown-unknown
+cargo install trunk --version 0.21.14 --locked
+trunk serve --open
+```
+
+Per distribuire:
+
+```sh
+trunk build --release --locked
+python3 -m http.server 8080 --directory dist
+```
+
+Pubblicare il contenuto di `dist/` su un server statico HTTP(S). Gli URL sono
+relativi, quindi il gioco puo' essere ospitato anche in una sottocartella.
+Non aprire `index.html` con `file://`. Nessun hosting viene configurato
+automaticamente. Richiesti browser desktop moderni con WebGL2 e tastiera.
+
+Fare clic sul canvas o su **Enable audio** per attivare Web Audio. Il record
+e' locale al browser/origine; navigazione privata o storage disabilitato
+possono impedirne la persistenza senza bloccare il gioco.
+
+## Comandi
 
 | Tasto | Azione |
 |-------|--------|
-| `←` / `A` | Muovi a sinistra |
-| `→` / `D` | Muovi a destra |
-| `Spazio` | Spara / Avvia partita / Riprova |
-| `P` | Pausa / Riprendi |
-| `Esc` | Torna al menu principale |
+| Frecce sinistra/destra oppure A/D | Movimento |
+| Spazio | Avvia, spara, riprova |
+| P | Pausa / riprendi |
+| Esc | Menu |
+| F12 | Screenshot desktop |
 
-> **Suggerimento:** Puoi avere al massimo **2 proiettili** sullo schermo con la navicella singola, o **4** con il dual-fighter.
+Nel browser usare anche **Screenshot**: F12 puo' essere riservato agli strumenti
+sviluppatore. I PNG vengono scaricati, non scritti nel filesystem dell'app.
+Il canvas deve avere il focus per ricevere i comandi.
 
----
+## Regole conservate
 
-## 👾 Tipi di nemici e punteggi
+- Tre vite; respawn dopo 2 s e invulnerabilita' lampeggiante per altri 2 s.
+- Formazione oscillante 5x8: api, farfalle e due Boss Galaga; al massimo due
+  nemici in picchiata, con rientro dall'alto.
+- Due proiettili del giocatore contemporanei, quattro col dual-fighter.
+- Un boss in picchiata puo' catturare la nave, facendo perdere una vita.
+  Distruggerlo mentre la trasporta libera il dual-fighter e assegna +1000 punti.
+  Morire fa perdere il dual-fighter.
+- Api: 50/100 punti; farfalle: 80/160; boss: 150/400 (formazione/picchiata).
+- Fine livello dopo aver eliminato la formazione; nuova ondata dopo 2,5 s.
+  Velocita' crescente fino al doppio di quella iniziale.
+- Sei suoni sintetizzati a 22050 Hz: sparo, esplosione, morte, fine livello,
+  cattura e rescue; fino a otto voci sovrapposte.
+- Menu animato, 110 stelle a quattro profondita', sprite a due frame,
+  scie, esplosioni e ridimensionamento uniforme con bande nere.
 
-```
-┌──────────────────┬──────────────┬─────────────────┬─────────────┐
-│ Nemico           │ Aspetto      │ In formazione   │ In picchiata│
-├──────────────────┼──────────────┼─────────────────┼─────────────┤
-│ Ape              │ Giallo       │ 50 pt           │ 100 pt      │
-│ Farfalla         │ Ciano        │ 80 pt           │ 160 pt      │
-│ Boss Galaga      │ Rosso/Arancio│ 150 pt          │ 400 pt      │
-└──────────────────┴──────────────┴─────────────────┴─────────────┘
-```
+La versione Rust usa un **nuovo record**, senza leggere o cancellare quello
+della versione C#. Eframe lo salva nel proprio storage desktop o in localStorage
+sul web con chiave `galaga_rust_high_score_v1`. Solo il record e' persistente,
+non la partita. I/O fallibile e storage assente sono gestiti best-effort.
 
-**Disposizione della formazione (5 righe × 8 colonne = 40 nemici per livello):**
-```
-Riga 0: ✦ ✦ ✦ [B] [B] ✦ ✦ ✦   ✦ = Farfalla,  B = Boss Galaga
-Riga 1: ✦ ✦ ✦  ✦   ✦  ✦ ✦ ✦
-Riga 2: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶   ✶ = Ape
-Riga 3: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶
-Riga 4: ✶ ✶ ✶  ✶   ✶  ✶ ✶ ✶
-```
+## Test e screenshot
 
-### Regole di gioco
-- **3 vite** iniziali; la navicella riappare dopo **2 secondi**
-- Il livello termina quando tutti i 40 nemici sono distrutti; quello successivo inizia dopo 2,5 s
-- Fino a **2 nemici in picchiata simultaneamente**; i picchiatori che mancano il bersaglio curvano verso il basso ed escono dallo schermo, poi rientrano dall'alto
-- I nemici in picchiata che **colpiscono il giocatore** lo uccidono e muoiono a loro volta
-- **Invulnerabilità post-respawn:** per 2 s dopo la riapparizione la navicella lampeggia e non può essere colpita
-- **Cattura e dual-fighter:** se un Boss Galaga in picchiata ti tocca, ti cattura (perdi una vita) e trasporta la tua nave; distruggendolo mentre la trasporta liberi il dual-fighter (due navi affiancate, fuoco doppio, +1000 pt). Morire fa perdere il dual-fighter
-
----
-
-## 🚀 Per iniziare
-
-### Prerequisiti
-
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- macOS, Linux o Windows (l'audio richiede un dispositivo compatibile OpenAL)
-
-### Compilazione ed esecuzione
-
-```bash
-# Clona il repository
-git clone https://github.com/your-username/Galaga.git
-cd Galaga
-
-# Avvia il gioco
-dotnet run --project Galaga/Galaga.csproj
-
-# Esegui i test
-dotnet test
-
-# Esegui un singolo test
-dotnet test --filter "FullyQualifiedName~Player_dies_when_hit_by_enemy_bullet"
-
-# Build di rilascio
-dotnet publish Galaga/Galaga.csproj -c Release -o publish/
+```sh
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features --locked -- -D warnings
+cargo test --locked
+cargo check --target wasm32-unknown-unknown --lib --locked
+cargo run --release --locked -- --screenshots
 ```
 
----
+37 test Rust coprono il port dei 20 casi originali e regressioni per loop,
+pausa, avanzamento livello, dual, audio, record, viewport e PNG.
+`--screenshots` salva menu e gameplay a 800x600 in `screenshots/` e chiude
+solo dopo la scrittura. Non richiede input; usa un seed fisso per le catture.
+Le differenze di rastering dei font fra piattaforme sono normali.
 
-## 🏗️ Architettura
+`tests/web_smoke.cjs` verifica avvio, audio da gesto, comandi, pausa, resize/HiDPI,
+record, download PNG e funzionamento con audio/storage indisponibili:
 
-```
-Galaga/
-├── Engine/
-│   ├── GameEngine.cs       # Logica di gioco pura: ciclo tick, collisioni, IA, punteggio
-│   ├── GameState.cs        # Tutto lo stato mutabile (fase, punteggio, vite, liste entità)
-│   └── HighScoreStore.cs   # Persistenza punteggio massimo su file JSON
-├── Entities/
-│   ├── Entity.cs           # Base astratta: posizione, dimensione, collisione AABB
-│   ├── Player.cs           # Movimento, limite proiettili, respawn, invulnerabilità, dual-fighter
-│   ├── Enemy.cs            # Macchina a stati per ciascun nemico (supporta cattura navi)
-│   ├── EnemyFormation.cs   # Griglia, oscillazione, ondate di entrata
-│   ├── Bullet.cs           # Direzione determinata dall'enum BulletOwner
-│   └── Explosion.cs        # Dati visivi della particella di esplosione
-├── Views/
-│   ├── GameCanvas.cs       # Controllo Avalonia: timer 60 fps, eventi tastiera, Render()
-│   └── SpriteRenderer.cs   # Tutto il codice di disegno (pixel-art + geometria)
-└── Audio/
-    └── SoundPlayer.cs      # Sintesi OpenAL (sparo, esplosione, morte, fine livello, cattura, rescue)
+```sh
+# Con dist/ servita su http://127.0.0.1:8765
+npm install --prefix /tmp/galaga-browser playwright@1.64.1
+/tmp/galaga-browser/node_modules/.bin/playwright install chromium firefox webkit
+NODE_PATH=/tmp/galaga-browser/node_modules BROWSER=chromium node tests/web_smoke.cjs
 ```
 
-### Flusso dei dati
+Ripetere con `BROWSER=firefox` e `BROWSER=webkit`. `URL` permette un server
+diverso; `BROWSER_EXECUTABLE` permette un browser gia' installato.
 
-```
-GameCanvas.OnTick(16ms)
-    │
-    ├─► GameCanvas.UpdateStars(dt)   ── parallasse delle stelle
-    │
-    ├─► GameEngine.Tick(dt)          ──► modifica GameState
-    │       │                              │
-    │       ├─ giocatore / formazione      ├─ lista Bullets
-    │       ├─ collisioni (proiettili +    ├─ lista Explosions
-    │       │  nemico-giocatore)           └─ coda PendingSounds
-    │       └─ accoda SoundEffects
-    │
-    ├─► SoundPlayer.Play()    ◄── estrae da PendingSounds
-    │
-    └─► InvalidateVisual()    ──► GameCanvas.Render(DrawingContext)
-                                      │
-                                      ├─ SpriteRenderer.DrawEnemy(frame)
-                                      ├─ SpriteRenderer.DrawPlayer()
-                                      ├─ SpriteRenderer.DrawExplosion()
-                                      └─ HUD / testi overlay
-```
+## Architettura
 
-### Macchina a stati del nemico
+| Modulo | Responsabilita' |
+|--------|-----------------|
+| `entities.rs` | Entita', AABB, formazione e stati nemici; nessuna UI |
+| `game.rs` | Regole pure, fasi, RNG con seed e passo fisso 16 ms |
+| `app.rs` | Input eframe, accumulatore con delta massimo 50 ms, effetti |
+| `render.rs` | egui::Painter, mappe ASCII, HUD, stelle e menu |
+| `audio.rs` | Sintesi condivisa; rodio desktop e Web Audio browser |
+| `storage.rs` | Nuovo record e flush tempestivo tramite eframe |
+| `screenshots.rs` | Cattura framebuffer, ritaglio letterbox, PNG e download |
+| `main.rs` / `lib.rs` | Entrypoint desktop / web |
 
-```
-FormationEntry ──(raggiunge lo slot)──► InFormation
-                                             │
-                                  (innesco casuale picchiata)
-                                             │
-                                             ▼
-                                          Diving ──(fuori schermo in basso)──► Returning
-                                                                                    │
-                                                                       (raggiunge lo slot)
-                                                                                    │
-                                                                                    ▼
-                                                                              InFormation
+Il motore non usa geometria egui, filesystem o dispositivi audio. L'app
+consuma la coda dei suoni e salva il record dopo il tick. La simulazione non
+dipende dal refresh del display; perdita di focus azzera gli input mantenuti.
+
+## Release
+
+La CI compila/testa Rust sui runner Windows, Linux e macOS, verifica il web
+con Chromium/Firefox/WebKit e crea cinque archivi: Windows x64, Linux x64,
+macOS Intel, macOS Apple Silicon e sito web statico.
+Su push a `main`, pubblica una release `v1.0.<numero workflow>` solo dopo i gate.
+
+Per creare localmente un bundle nativo, dopo la build del target:
+
+```sh
+cargo build --release --locked --target aarch64-apple-darwin
+python3 scripts/package.py aarch64-apple-darwin 1.0.0
 ```
 
-> **Regola chiave:** Nello stato `InFormation`, `Enemy.Update()` **aggancia** `X/Y` a `FormationX + oscillationOffset` ad ogni tick. Impostare `X`/`Y` direttamente non ha effetto duraturo se non vengono aggiornati anche `FormationX`/`FormationY`.
->
-> **Collisione con il giocatore:** I nemici in stato `Diving` che toccano il giocatore lo uccidono e muoiono a loro volta — *tranne* il **Boss Galaga**, che invece lo cattura e trasporta la nave finché non lo distruggi (liberando il dual-fighter).
-
----
-
-## 🔊 Audio
-
-I suoni vengono sintetizzati a runtime come PCM a 22050 Hz e riprodotti tramite **OpenAL** (`Silk.NET.OpenAL`). Nessun file audio incluso. Se OpenAL non è disponibile, il gioco funziona senza audio.
-
-| Suono | Sintesi |
-|-------|---------|
-| Sparo | Onda quadra, sweep 820 → 160 Hz, 90 ms |
-| Esplosione nemica | Rumore bianco + rumble 80 Hz, 220 ms |
-| Morte del giocatore | Onda quadra, sweep 580 → 55 Hz, 600 ms |
-| Fine livello | Arpeggio Do4–Mi4–Sol4–Do5, onda quadra |
-| Cattura (Boss) | Fascio "tractor-beam": tono oscillante discendente, 500 ms |
-| Rescue (dual-fighter) | Arpeggio ascendente Do4–Sol4–Do5–Mi5, onda quadra |
-
----
-
-## 🧪 Test
-
-```bash
-dotnet test
-```
-
-20 test unitari coprono i livelli `GameEngine` ed `Entities` (nessuna dipendenza dall'interfaccia grafica):
-
-- Vite, limite proiettili e respawn del giocatore
-- Invulnerabilità post-respawn e mancata uccisione durante il lampeggio
-- Cattura del Boss Galaga e rescue del dual-fighter
-- Rilevamento collisioni (AABB, guardia entità morte)
-- Punteggio (bonus formazione vs. picchiata, +1000 rescue)
-- Transizioni game over e fine livello
-- Inizializzazione della formazione
-- Morte del giocatore per collisione con nemico in picchiata
-
----
-
-## 🛠️ Stack tecnologico
-
-| Componente | Tecnologia |
-|------------|-----------|
-| Linguaggio | C# 12 / .NET 8 |
-| UI e rendering | [Avalonia UI](https://avaloniaui.net/) 11 |
-| Audio | [Silk.NET.OpenAL](https://github.com/dotnet/Silk.NET) 2.23 |
-| Test | xUnit |
-| Sprite | Puro codice (rettangoli pixel-art + `StreamGeometry`) |
-
----
-
-## 📄 Licenza
-
-MIT
+Output in `publish/`, mai tracciato nel repository. I bundle macOS non sono
+firmati/notarizzati. Gli eseguibili Linux richiedono le librerie di sistema
+audio/finestra/OpenGL e una distribuzione con glibc compatibile con il runner
+di build; non sono binari statici universali.

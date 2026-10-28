@@ -1,11 +1,16 @@
-# .NET / Avalonia
+# Rust and generated packages
+/target/
+/dist/
+/publish/
+/Galaga.app/
+/node_modules/
+
+# Editor/local files
 bin/
 obj/
-*.user
 .vs/
 .idea/
-*.suo
-*.userprefs
+*.user
 
 # macOS
 .DS_Store

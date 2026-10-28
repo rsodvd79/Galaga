@@ -1,0 +1,37 @@
+[package]
+name = "galaga"
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.95"
+description = "A pixel-art arcade game for desktop and browser"
+license = "MIT"
+
+[lib]
+name = "galaga_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+eframe = { version = "0.37", default-features = false, features = ["accesskit", "default_fonts", "glow", "persistence", "wayland", "x11"] }
+image = { version = "0.25", default-features = false, features = ["png"] }
+rand = { version = "0.10", default-features = false, features = ["std", "std_rng"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rodio = { version = "0.23", default-features = false, features = ["playback"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+    "AudioContext", "AudioBuffer", "AudioBufferSourceNode", "AudioNode",
+    "AudioDestinationNode", "GainNode", "AudioParam", "AudioContextState",
+    "Window", "Document", "HtmlCanvasElement", "HtmlAnchorElement",
+    "Blob", "BlobPropertyBag", "Url", "EventTarget", "Event",
+    "KeyboardEvent", "MouseEvent",
+] }
+
+[profile.release]
+opt-level = 2
+
+[profile.release.package."*"]
+opt-level = 2
