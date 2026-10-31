@@ -2,6 +2,8 @@ name: CI & Release
 
 on:
   push:
+    branches: ['**']
+    tags: ['**']
   pull_request:
   workflow_dispatch:
 
@@ -107,11 +109,11 @@ jobs:
       - name: Package static website
         run: |
           cd dist
-          zip -r "../Galaga.${{ needs.version.outputs.stamp }}-web.zip" .
+          zip -r "../Galaga.web.${{ needs.version.outputs.stamp }}.zip" .
       - uses: actions/upload-artifact@v4
         with:
           name: galaga-web
-          path: Galaga.*-web.zip
+          path: Galaga.web.*.zip
 
   release:
     if: github.event_name == 'push'

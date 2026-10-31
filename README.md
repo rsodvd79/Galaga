@@ -143,13 +143,16 @@ dipende dal refresh del display; perdita di focus azzera gli input mantenuti.
 La CI compila/testa Rust sui runner Windows, Linux e macOS, verifica il web
 con Chromium/Firefox/WebKit e crea cinque archivi: Windows x64, Linux x64,
 macOS Intel, macOS Apple Silicon e sito web statico.
-Su push a `main`, pubblica una release `v1.0.<numero workflow>` solo dopo i gate.
+Su ogni push a qualsiasi branch o tag, pubblica una release
+`vyyyy.MM.dd.HH.mm-<numero workflow>` solo dopo i gate.
+Gli ZIP si chiamano `Galaga.<os>.yyyy.MM.dd.HH.mm.zip`, con timestamp UTC e
+`<os>` pari a `windows`, `linux`, `macos-intel`, `macos-arm64` o `web`.
 
 Per creare localmente un bundle nativo, dopo la build del target:
 
 ```sh
 cargo build --release --locked --target aarch64-apple-darwin
-python3 scripts/package.py aarch64-apple-darwin 1.0.0
+python3 scripts/package.py aarch64-apple-darwin "$(date -u +'%Y.%m.%d.%H.%M')"
 ```
 
 Output in `publish/`, mai tracciato nel repository. I bundle macOS non sono
