@@ -9,8 +9,18 @@ permissions:
   contents: read
 
 jobs:
+  version:
+    name: Version stamp
+    runs-on: ubuntu-24.04
+    outputs:
+      stamp: ${{ steps.stamp.outputs.stamp }}
+    steps:
+      - id: stamp
+        run: echo "stamp=$(date -u +'%Y.%m.%d.%H.%M')" >> "$GITHUB_OUTPUT"
+
   native:
     name: Native (${{ matrix.target }})
+    needs: version
     strategy:
       fail-fast: false
       matrix:
@@ -51,7 +61,7 @@ jobs:
         env:
           LIBGL_ALWAYS_SOFTWARE: "1"
       - name: Package native artifact
-        run: python scripts/package.py ${{ matrix.target }} 1.0.${{ github.run_number }}
+        run: python scripts/package.py ${{ matrix.target }} ${{ needs.version.outputs.stamp }}
       - uses: actions/upload-artifact@v4
         with:
           name: galaga-${{ matrix.target }}
@@ -59,6 +69,7 @@ jobs:
 
   web:
     name: WebAssembly
+    needs: version
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -96,15 +107,15 @@ jobs:
       - name: Package static website
         run: |
           cd dist
-          zip -r "../Galaga-1.0.${{ github.run_number }}-web.zip" .
+          zip -r "../Galaga.${{ needs.version.outputs.stamp }}-web.zip" .
       - uses: actions/upload-artifact@v4
         with:
           name: galaga-web
-          path: Galaga-*-web.zip
+          path: Galaga.*-web.zip
 
   release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [native, web]
+    if: github.event_name == 'push'
+    needs: [version, native, web]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -115,7 +126,7 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Galaga v1.0.${{ github.run_number }}
+          tag_name: v${{ needs.version.outputs.stamp }}-${{ github.run_number }}
+          name: Galaga v${{ needs.version.outputs.stamp }}
           generate_release_notes: true
           files: artifacts/*.zip

@@ -15,7 +15,7 @@ def package(target, version):
     binary = root / "target" / target / "release" / ("galaga.exe" if windows else "galaga")
     if not binary.is_file():
         raise FileNotFoundError(binary)
-    output = root / "publish" / f"Galaga-{version}-{target}.zip"
+    output = root / "publish" / f"Galaga.{version}-{target}.zip"
     output.parent.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory() as temporary:
         staging = pathlib.Path(temporary)
