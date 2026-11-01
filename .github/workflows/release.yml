@@ -94,7 +94,12 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/browser" playwright@1.64.1
           "$RUNNER_TEMP/browser/node_modules/.bin/playwright" install --with-deps chromium firefox webkit
-          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 pulseaudio
+      - name: Start virtual audio output
+        run: |
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=galaga_ci
+          pactl set-default-sink galaga_ci
       - name: Browser smoke tests
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist &

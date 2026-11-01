@@ -123,6 +123,14 @@ diverso; `BROWSER_EXECUTABLE` permette un browser gia' installato.
 Su Linux, Firefox usa una finestra per WebGL: per i runner senza display,
 eseguire il test con `LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a node tests/web_smoke.cjs`
 e installare `xvfb`, `libgl1-mesa-dri` e `libglx-mesa0`.
+Per verificare Web Audio su runner senza dispositivo audio, installare anche
+`pulseaudio` e avviare un'uscita virtuale prima dei test:
+
+```sh
+pulseaudio --start --exit-idle-time=-1
+pactl load-module module-null-sink sink_name=galaga_ci
+pactl set-default-sink galaga_ci
+```
 
 ## Architettura
 
