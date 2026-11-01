@@ -6,10 +6,21 @@ const { chromium, firefox, webkit } = require("playwright");
 async function main() {
   const name = process.env.BROWSER || "chromium";
   const browser = await ({ chromium, firefox, webkit })[name].launch({
-    headless: true,
+    // Firefox on Linux needs an X display for software WebGL.
+    headless: !(name === "firefox" && process.platform === "linux"),
     ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}),
   });
   try {
+    async function waitForStartup(page) {
+      await page.waitForFunction(() => {
+        const status = document.getElementById("status");
+        if (status?.textContent.startsWith("Unable to start Galaga:")) {
+          throw new Error(status.textContent);
+        }
+        return window.wasmBindings && !status;
+      });
+    }
+
     const page = await browser.newPage({ viewport: { width: 1200, height: 700 }, deviceScaleFactor: 2 });
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
@@ -21,7 +32,7 @@ async function main() {
       };
     });
     await page.goto(process.env.URL || "http://127.0.0.1:8765");
-    await page.waitForFunction(() => window.wasmBindings && !document.getElementById("status"));
+    await waitForStartup(page);
     await page.locator("#audio").click();
     await page.waitForFunction(() => window.audioContexts.some(context => context.state === "running"));
 
@@ -75,7 +86,7 @@ async function main() {
 
     await page.evaluate(() => localStorage.setItem("galaga_rust_high_score_v1", "1234"));
     await page.reload();
-    await page.waitForFunction(() => !document.getElementById("status"));
+    await waitForStartup(page);
     await page.setViewportSize({ width: 600, height: 900 });
     assert.equal((await capture()).file, "galaga_menu.png");
     assert.equal(await page.evaluate(() => localStorage.getItem("galaga_rust_high_score_v1")), "1234");
@@ -90,7 +101,7 @@ async function main() {
       window.AudioContext = class { constructor() { throw new Error("no audio device"); } };
     });
     await unavailable.goto(process.env.URL || "http://127.0.0.1:8765");
-    await unavailable.waitForFunction(() => !document.getElementById("status"));
+    await waitForStartup(unavailable);
     await unavailable.locator("#audio").click();
     await unavailable.keyboard.press("Space");
     const failedAudioDownload = unavailable.waitForEvent("download");

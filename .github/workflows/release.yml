@@ -94,18 +94,22 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/browser" playwright@1.64.1
           "$RUNNER_TEMP/browser/node_modules/.bin/playwright" install --with-deps chromium firefox webkit
+          sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
       - name: Browser smoke tests
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist &
           server=$!
           trap 'kill "$server"' EXIT
           for attempt in 1 2 3 4 5; do
-            if curl -fsS http://127.0.0.1:8765/ >/dev/null; then break; fi
+            if curl -fs http://127.0.0.1:8765/ >/dev/null; then break; fi
             sleep 1
           done
+          curl -fsS http://127.0.0.1:8765/ >/dev/null
           for browser in chromium firefox webkit; do
-            BROWSER="$browser" NODE_PATH="$RUNNER_TEMP/browser/node_modules" node tests/web_smoke.cjs
+            BROWSER="$browser" NODE_PATH="$RUNNER_TEMP/browser/node_modules" xvfb-run -a node tests/web_smoke.cjs
           done
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
       - name: Package static website
         run: |
           cd dist

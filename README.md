@@ -120,6 +120,9 @@ NODE_PATH=/tmp/galaga-browser/node_modules BROWSER=chromium node tests/web_smoke
 
 Ripetere con `BROWSER=firefox` e `BROWSER=webkit`. `URL` permette un server
 diverso; `BROWSER_EXECUTABLE` permette un browser gia' installato.
+Su Linux, Firefox usa una finestra per WebGL: per i runner senza display,
+eseguire il test con `LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a node tests/web_smoke.cjs`
+e installare `xvfb`, `libgl1-mesa-dri` e `libglx-mesa0`.
 
 ## Architettura
 
