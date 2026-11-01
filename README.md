@@ -19,7 +19,7 @@ cargo run --release --locked
 Su Debian/Ubuntu, installare prima le librerie di sviluppo:
 
 ```sh
-sudo apt-get install build-essential pkg-config libasound2-dev libxkbcommon-dev \
+sudo apt-get install build-essential pkg-config libasound2-dev libxkbcommon-dev libxkbcommon-x11-dev \
   libx11-dev libxi-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev libegl1-mesa-dev
 ```
 
